@@ -1,0 +1,32 @@
+How to compile
+==============
+If you have GNU make installed:
+   1) Edit the Makefile to fit to you needs
+   2) If you don't have libcrypt installed, set CRYPT to nothing in the Makefile.
+      For debian users: look for "libmcrypt-dev".
+   3) Edit config.h for your needs
+   4) copy lang-xx.h to lang.h or translate lang.h to your language
+   5) Do a make
+
+If you don't have GNU make installed:
+   1) Edit config.h for your needs
+   2) copy lang-xx.h to lang.h or translate lang.h to your language
+   3) Do a "gcc -o w3chess.cgi -lcrypt w3chess.c" or "gcc -o w3chess.cgi w3chess.c"
+         (gcc could be an other compiler)
+
+How to install
+==============
+   1) Copy the w3chess.cgi to a path where your webserver could execute CGI-scripts.
+      If you use Apache this is a path defined by a "ScriptAlias"-directive, e.g. "/var/www/cgi-bin/"
+   2) Copy all files from the "figures"-subdirectory to the path which is accessable from outside
+      as defined in config.h by the "IMGURLPREFIX"-term
+   3) Ensure that the datapath (DATAPATH in config.h) exists and is accessable by your webserver
+      (it should have read and write permissions by the user who is running the httpd)
+      To enhance security choose a path which is not accesible via browser, in best case one,
+      which is not somewhere in your web-servers document path.
+   4) That should be all ! Try it and look at your error_log if you hav any problems.
+
+Pre-Install
+===========
+	If you have installed w3Chess with Admin-Option, you should click on the "Pi"-Sign and 
+  enter your admin-password !!! 

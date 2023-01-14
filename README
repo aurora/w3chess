@@ -1,0 +1,30 @@
+License:
+========
+This software is licensed under GPL, please use it at your own risk and without warranty !
+
+Warnings:
+=========
+You should only have the w3chess-data in the w3chess-datadir. If not, there's a risk of loose your data in this dir!
+If you want to be safe, undef ALLOWREMOVE in config.h and you can't remove your games within your web-browser.
+
+Customization:
+==============
+You can customize W3Chess easily:
+- edit config.h
+- edit lang.h
+- use own header-, footer- and defaultpage-files (defined in config.h)
+- if you want to change colors, pieces and so on: edit defaults.h
+
+If you write your own language-files, please send them to
+sirtobi@stud.uni-hannover.de
+
+If you write a better documentation: send it to
+sirtobi@stud.uni-hannover.de
+
+If you are looking for newer versions of w3chess:
+http://w3chess.sourceforge.net/
+
+
+Have Fun !
+
+Sirtobi

@@ -1,0 +1,188 @@
+/* charset */
+#define CHARSET "iso-8859-1"
+
+/* global */
+#define CALLITFROMBROWSER "Das Programm soll *nicht* direkt gestartet werden !"
+
+/* start */
+#define STARTGAMENICK1 "Spitzname von Spieler 1"
+#define STARTGAMENICK2 "Spitzname von Spieler 2"
+#define STARTGAMELEAVEBLANK "Lassen Sie den Gegenspieler frei, wenn Sie keinen haben !"
+#define STARTGAMEMAIL1 "Mailadresse des 1. Spielers"
+#define STARTGAMEMAIL2 "Mailadresse des 2. Spielers"
+#define STARTHASWHITE "Dieser Spieler hat Weiß"
+#define STARTNEW "Neues Spiel starten"
+#define STARTGAMEID "Spiele-ID"
+#define STARTRESUME "Spiel fortsetzen"
+#define STARTFINISH "Das neue Spiel ist eröffnet, sehen Sie in Ihre Mailbox !"
+#define STARTWAIT "Nun müssen Sie auf Ihren Gegner warten..."
+#define STARTSEARCH "Nehmen Sie an einem der folgenden Spiele teil:"
+#define STARTNUMBERGAMES "Spiel(e)"
+#define STARTNUMBEROGAMES "Spiel(e) offen"
+#define STARTANEWGAME "Ein neues Spiel beginnen"
+#define STARTRESUMEAGAME "Ein Spiel fortsetzen"
+#define STARTSENDMYGAMES "Liste aller eigenen Spiele zusenden lassen"
+#define STARTSENDNOMAIL "Spiele nur im Browser auflisten"
+#define STARTMYMAIL "Meine Emailadresse"
+#define STARTSEND "Senden"
+
+/* mail */
+#define MAILDEAR "Hallo"
+#define MAILMOVE "Dein Zug. Dein Paßwort ist"
+#define MAILURLRESUME "Öffne diesen Link um das Spiel fortzusetzen"
+#define MAILURLVIEW "Öffne diesen Link um Dir das Spiel anzusehen"
+#define MAILDONE "Dein Zug ist beendet."
+#define MAILINVITE "Du wurdest zu einer Partie Schach eingeladen !"
+#define MAILID "Deine Spiele-ID ist"
+#define MAILBOARD "Das Board ist erreichbar unter"
+#define MAILWINNER "Du hast das Spiel gewonnen !"
+#define MAILOPCHECK "Dein Gegner steht im Schach !"
+#define MAILPASS "Das Paßwort wurde Dir zugeschickt !"
+#define MAILREMIS "Remis angefragt !"
+#define MAILISREMIS "Remis !"
+#define MAILGIVESUP "%s gibt auf !"
+#define MAILHIT "geschlagen"
+#define MAILFINISHED "Das Spiel ist beendet !"
+#define MAILAGAINST "gegen"
+#define MAILYOUWHITE "Du hast die weißen Figuren (Großbuchstaben) !"
+#define MAILYOUBLACK "Du hast die schwarzen Figuren (Kleinbuchstaben) !"
+
+/* resume */
+#define RESTITLE "Schachspiel: %s gegen %s"
+#define RESTURN "%s ist mit %s am Zug !"
+#define RESTURNR "Deine Entscheidung %s !"
+#define RESLAST "Der letzte Zug war"
+#define RESPASS "Bitte das Paßwort eingeben"
+#define RESMOVES "Züge bisher"
+#define RESCHANGE "Gegen welche Figur möchtest Du Deinen Bauern tauschen ?"
+#define RESMESSAGE "Nachricht"
+#define RESREQUESTSENT "Deine Anfrage wurde übermittelt !"
+#define RESREMREQ "Remis angefragt !"
+#define RESMAILOF "Mailadresse von %s"
+#define RESID "Spiele-ID"
+#define RESSTART "Spiel gestartet am"
+#define RESFIXPASS "Festes Passwort"
+#define RESFIXPASSA "Nochmal eingeben"
+#define RESPASSWARN "Als Erinnerung: DIE PASSWORTE SIND NICHT SICHER !<br>Jeder kann sie relativ leicht ausspähen.<br>Benutze also niemals Deine Standardpassworte !"
+#define RESNOMAILTOME "Ich möchte während des Spiels keine Mails erhalten"
+
+
+/* moved */
+#define MOVEDFINISH "Dein Zug wurde abgeschickt, bitte klicke hier um das Board noch einmal anzusehen !"
+#define MOVECANC "Zug abgebrochen !"
+
+/* sendgames */
+#define SENDGAMESPLAY "Du bist an den folgenden Spielen beteiligt"
+#define SENDGAMESBYE "Einen schönen Tag noch !"
+#define SENDGAMESBACK "Deine Spiele wurden Dir zugeschickt !"
+#define SENDGAMENOTFOUND "Für diese Adresse existieren keine Spiele !"
+#define SENDBACK "Zurück zum Login"
+
+/* errors */
+#define ERRORDEFAULT "Fehler"
+#define ERRORCREATE "Ich kann die Datei nicht anlegen"
+#define ERROROPEN "Ich kann die Datei nicht öffnen"
+#define ERRORPIPE "Ich kann die Pipe nicht öffnen"
+#define ERRORID "Dieses Spiel existiert nicht !"
+#define ERRORMEM "Zu wenig Speicher"
+#define ERRORMOV "Fehler beim ziehen"
+#define ERRORPASS "Das Paßwort fehlte oder war falsch !"
+#define ERRORGAMEDIR "Ich kann das Spieleverzeichnis nicht öffnen !"
+#define ERRORGAMECOR "Die Spieledaten sind fehlerhaft !"
+#define ERRORMAILVALID "Ungültige Mailadresse !"
+#define ERRORMISMAIL "Fehlende Mailadresse !"
+#define ERRORMISNICK "Fehlender Spitzname !"
+#define ERRORNICKLONG "Der Spitzname ist zu lang !"
+#define ERRORMAILLONG "Die Mailadresse ist zu lang !"
+#define ERRORPASSLONG "Das Passwort ist zu lang !"
+#define ERROROLDBOARD "Das angezeigte Board ist veraltet und muß neu geladen werden !"
+#define ERRORILLEGAL "Ungültiger Zug !"
+#define ERRORNODP "Im Benutzernamen ist kein : erlaubt !"
+#define ERRORPASSMATCH "Die Passworte stimmen nicht überein !"
+
+
+/* pieces */
+#define TLONGR "Turm"
+#define TLONGP "Bauer"
+#define TLONGN "Springer"
+#define TLONGK "König"
+#define TLONGQ "Dame"
+#define TLONGB "Läufer"
+#define TEMPTY ""
+
+#define TWHITE "Weiß"
+#define TBLACK "Schwarz"
+
+#define TSHORTR "T"
+#define TSHORTP "B"
+#define TSHORTN "S"
+#define TSHORTK "K"
+#define TSHORTQ "D"
+#define TSHORTB "L"
+#define TSHORTE " "
+
+/* Special Moves */
+#define SMCKS "Rochade zur Königsseite"
+#define SMCQS	"Rochade zur Königinnenseite"
+#define SMEP "En Passant"
+#define MATE "Matt"
+#define CHECK "Schach"
+
+/* Special Actions */
+#define SPECIALRESENT "Paßwort neu senden"
+#define SPECIALGIVEUP "Aufgeben"
+#define SPECIALREMIS "Remis?"
+#define SPECIALSETTINGS "Einstellungen"
+#define SPECIALDO "Tu es"
+#define SPECIALSETTINGSCHANGED "Deine Einstellungen wurden gesichert !"
+#define SPECIALLOGOUT "Ausloggen"
+
+
+/* Messages */
+#define MSGOK "Ok"
+#define MSGYES "Ja"
+#define MSGNO "Nein"
+#define MSGACCEPT "Annehmen"
+#define MSGDIS "Ablehnen"
+
+/* Admin Mode */
+#define ADMIN_SPECIFY_PASS "Sie müssen ein Paßwort angeben !"
+#define ADMIN_PASS_OLD "Altes Paßwort"
+#define ADMIN_PASS "Paßwort"
+#define ADMIN_PASS_RE "Paßwort wiederholen"
+#define ADMIN_OK "Ok"
+#define ADMIN_EOPASS "Zugriff auf die Paßwortdatei nicht möglich !"
+#define ADMIN_EKEY  "Falscher Krypto-Key, die Verschlüsselung wurde deaktiviert !"
+#define ADMIN_PASSDIFFER "Die Paßworte waren unterschiedlich !"
+#define ADMIN_TABLE_START "Anfang"
+#define ADMIN_TABLE_ACC "Letzter Zugriff"
+#define ADMIN_TABLE_P1 "Spieler 1"
+#define ADMIN_TABLE_P2 "Spieler 2"
+#define ADMIN_TABLE_PW "Paßwort"
+#define ADMIN_DELETE "Löschen"
+#define ADMIN_END "Zurück zur Anmeldung"
+#define ADMIN_PWSAVED "Paßwort gespeichert !"
+#define ADMIN_WRONGPASS "Falsches Paßwort !"
+#define ADMIN_NUM " # "
+#define ADMIN_AGAINST "Gegner"
+#define ADMIN_STATUS "Status"
+#define ADMIN_STATUS_YOU "Zug"
+#define ADMIN_STATUS_NOT_YOU "Warten"
+#define ADMIN_STATUS_FIN "Beendet"
+#define ADMIN_GAMES_OF "Spiele von"
+
+
+/* Arrows */
+#define ARROW_T_L "Links"
+#define ARROW_T_R "Rechts"
+#define ARROW_T_LL "Anfang"
+#define ARROW_T_RR "Ende"
+
+/* other icons */
+#define SWAP_TEXT0 "ws"
+#define SWAP_TEXT1 "sw"
+#define REDFRAME_TEXT "R"
+#define SWAP_TEXT0_LONG "Weiß oben"
+#define SWAP_TEXT1_LONG "Schwarz oben"
+#define REDFRAME_TEXT_LONG "Alle möglichen Züge anzeigen"
+

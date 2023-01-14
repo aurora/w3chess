@@ -1,0 +1,46 @@
+Global Variables
+================
+
+Functions
+=========
+myisupper: checks if an character is upper or not. returns 1 for true and 0 for false.
+myislower: checks if an character is lower or not. returns 1 for true and 0 for false.
+hexDec: transforms hexadecimal in deciaml values
+errorwin: display an error and go back to the game
+back2board: referer back to the board
+checkmail: check mail for valid string
+piecepointer: set pointers to image and descriptions of a piece
+query2String: converts the %AB in query string to the original values and "<>" to "[]"
+header: prints internal or external header for all pages
+footer: prints internal or external footer for all pages
+rewritedata: rewrite the game-control-file
+rewritegame: write the game file and only change password and/or message
+rewriteemail: change the 1st players email
+genpass: generate the password
+movesout: converts the moves-string in human redable moves for weboutput or mail
+isnumber: checks if a given string is a number
+deleteoldgames: find old games and delete them. this is the function with the MOST RISK
+start: generates the first page if no parameters are given. You could also use a normal page
+mail: send the mails to the opponents
+getPieceFromBoard: returns the piece on a given position from the board
+kingIsAttacked: checks if a piece (the king) is attacked at position x,y
+interncm: wrapper for canmove for internal representation
+pieceFree: checks if a piece is "free" at one postition, so it could be moved
+wayFree: is the way from x,y to x',y' free or blocked ?
+checkMove: check if a move is legal and its direction
+whereIsMyKing: Search for the king-position on the board
+canmove: checks for valid moves when generating the board
+readgamedata: read the saved game to global variables
+resumegame: function to resume a specific game
+newgame: generate a new game
+ismate:	checks if you are in check or mate
+piecemoved: called when a move is done
+changemail: change active players email
+joingame: join an open game
+sendgames: send a player his game-list
+listgames: show the list of games
+saveAdminPass: save the administrators password
+admin: admin mode
+view: view old board states
+main: guess it ;-)
+

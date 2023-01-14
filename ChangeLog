@@ -1,0 +1,113 @@
+version 0.8.4
+-------------
+- charset header for mails
+
+version 0.8.2
+-------------
+- pi sign to the right
+
+version 0.8.1
+-------------
+- history in konqueror fixed
+- redframes in konqueror fixed
+- square instead of rectangles in konqueror
+- other arrows, fix for konqueror
+- new option: ENABLELIST to enable ACTION=LIST
+
+version 0.8
+------------
+- new debugging option SHOWPASS
+- wrong ascii art in mail fixed
+- remis-bug fixed
+
+version 0.7f
+------------
+- ability to avoid mails with identical from- and to in header when sending list of games
+- set the opponent in from-header when resending the game
+
+version 0.7e
+------------
+- users with own passwords are unable to give up
+
+version 0.7d
+------------
+- problems with empty messages, segfaults on Solaris 6
+
+version 0.7c
+------------
+- fixed some problems on Solaris 10beta6
+
+version 0.7b
+------------
+- fixed email Check
+- you can swap finished games
+- some more comments in defaults.h
+
+version 0.7a
+-----------
+- wrong mate check
+
+version 0.7
+-----------
+- its hopefully not possible to move empty pieces anymore
+
+version 0.6h
+------------
+- mate is marked in the game files for now for statistical purposes.
+
+version 0.6g
+------------
+- change email and password in one step
+
+version 0.6f
+------------
+- corrupt datafiles when long passwords and long nicknames
+
+version 0.6e
+------------
+- Brazilian Portuguese translation added, thanks a lot to Fabio !
+
+version 0.6d
+------------
+- italian translation added, thanks a lot to Carlo !
+
+version 0.6c
+------------
+- BugFix for glibc2.2
+
+version 0.6b
+------------
+- reverse moves list
+- sendgames list is bookmarkable now
+- some corrections of the german language file
+
+version 0.6a
+------------
+- it was unpossible to do a castle move
+
+version 0.6
+-----------
+- the user can specify a fix password
+- the user has the choice whether to get mails or not
+- the user can list all games in web, userful if password is fixed
+
+version 0.5e
+------------
+- the king could attack itself
+
+version 0.5d
+------------
+- some <br> included
+
+version 0.5c
+------------
+- king against king is right detected now
+
+version 0.5a
+------------
+- tar archive works now
+- see number of moves in admin mode
+
+version 0.5
+-----------
+- initial release
