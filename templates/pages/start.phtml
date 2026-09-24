@@ -1,0 +1,82 @@
+<?php
+/**
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var string $scriptName
+ * @var int $totalActive
+ * @var list<array{id: \W3Chess\Game\GameId, nick: string, message: ?string}> $openGames
+ */
+$theme = $config->theme;
+?>
+<table border="0">
+<tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><td align="center">
+<font size="+1" color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('STARTANEWGAME')) ?></b></font>
+</td></tr>
+<tr><td align="center">
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="NEW">
+<table border="0"><tr>
+<td><?= $e($t->get('STARTGAMENICK1')) ?>: </td><td><input type="text" name="NICK1" size="<?= $e($theme->nickLength) ?>"></td>
+</tr><tr>
+<td><?= $e($t->get('STARTGAMEMAIL1')) ?>: </td><td><input type="text" name="MAIL1" size="<?= $e($theme->mailLength) ?>"></td>
+</tr><tr>
+<td colspan="2"><input type="radio" name="WHITE" value="1" checked><?= $e($t->get('STARTHASWHITE')) ?></td>
+</tr><tr>
+<td colspan="2"><?= $e($t->get('STARTGAMELEAVEBLANK')) ?></td>
+</tr><tr>
+<td><?= $e($t->get('STARTGAMENICK2')) ?>: </td><td><input type="text" name="NICK2" size="<?= $e($theme->nickLength) ?>"></td>
+</tr><tr>
+<td><?= $e($t->get('STARTGAMEMAIL2')) ?>: </td><td><input type="text" name="MAIL2" size="<?= $e($theme->mailLength) ?>"></td>
+</tr><tr>
+<td colspan="2"><input type="radio" name="WHITE" value="2"><?= $e($t->get('STARTHASWHITE')) ?></td>
+</tr></table><br>
+<?= $e($t->get('RESMESSAGE')) ?>: <input type="text" name="MESSAGE" size="<?= $e($theme->messageBoxLength) ?>" value="">
+<br><br><input type="submit" value="<?= $e($t->get('STARTNEW')) ?>"><br>&nbsp;
+</form>
+</td></tr>
+
+<tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><td align="center">
+<font size="+1" color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('STARTRESUMEAGAME')) ?></b></font>
+</td></tr>
+<tr><td align="center">
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="RESUME"><br>
+<?= $e($t->get('STARTGAMEID')) ?>: <input type="text" name="ID"><br><br>
+<input type="submit" value="<?= $e($t->get('STARTRESUME')) ?>"><br>&nbsp;
+</form>
+</td></tr>
+
+<tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><td align="center">
+<font size="+1" color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('STARTSENDMYGAMES')) ?></b></font>
+</td></tr>
+<tr><td align="center">
+<form action="<?= $e($scriptName) ?>" method="get">
+<table border="0" cellpadding="0" cellspacing="0"><tr><td align="right">
+<input type="hidden" name="ACTION" value="SENDGAMES"><br>
+<?= $e($t->get('STARTMYMAIL')) ?>: <input type="text" name="MAIL1"><br>
+<?= $e($t->get('STARTSENDNOMAIL')) ?> <input type="checkbox" name="ONLYWEB"><br><br>
+</td></tr></table>
+<input type="submit" value="<?= $e($t->get('STARTSEND')) ?>"><br>&nbsp;
+</form>
+</td></tr>
+
+<?php if ($openGames !== []): ?>
+<tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><td align="center">
+<font size="+1" color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('STARTSEARCH')) ?></b></font>
+</td></tr>
+<tr><td align="center">
+<table border="0">
+<?php foreach ($openGames as $g): $id = (string) $g['id']; ?>
+<tr><td align="center"><b><?= $e($id[7]) ?><?= $e($id[8]) ?>.<?= $e($id[5]) ?><?= $e($id[6]) ?>.<?= $e($id[1]) ?><?= $e($id[2]) ?><?= $e($id[3]) ?><?= $e($id[4]) ?></b> &nbsp; </td>
+<td align="center"><a href="<?= $e($scriptName) ?>?ID=<?= $e(rawurlencode($id)) ?>&ACTION=JOIN"><?= $e($g['nick']) ?></a></td>
+<?php if ($g['message'] !== null): ?><td align="left"><font color="<?= $e($theme->colorMessage) ?>"> &nbsp; <?= $e($g['message']) ?></font></td><?php else: ?><td> &nbsp; </td><?php endif; ?>
+</tr>
+<?php endforeach; ?>
+</table>
+</td></tr>
+<?php endif; ?>
+
+<tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><td align="center">
+<font size="-1" color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($totalActive) ?> <?= $e($t->get('STARTNUMBERGAMES')) ?>, <?= $e(count($openGames)) ?> <?= $e($t->get('STARTNUMBEROGAMES')) ?></b></font>
+</td></tr>
+</table>

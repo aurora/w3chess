@@ -1,0 +1,84 @@
+<?php
+/**
+ * Ports view(): a read-only historical board (no password needed), reached
+ * from the move list's per-move links (opens in a "ViewWin" target window).
+ *
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var \W3Chess\Chess\PieceCatalog $pieces
+ * @var string $scriptName
+ * @var \W3Chess\Game\Game $game
+ * @var \W3Chess\Game\GameId $id
+ * @var int $number
+ * @var int $swap
+ * @var \W3Chess\Chess\Board $board
+ * @var \W3Chess\Chess\Move|null $nextMove
+ */
+$theme = $config->theme;
+$idStr = (string) $id;
+$blacksTurn = ($game->moveCount % 2) === 1;
+$isCurrentTurn = ($number % 2) === ($game->moveCount % 2);
+?>
+<font size="+1">
+<?= sprintf($e($t->get('RESTITLE')), $e($game->nextNick), $e($game->waitingNick)) ?>
+</font><br>
+<?php if (($number % 2) === 1): ?>
+<?= sprintf($e($t->get('RESTURN')), $e($isCurrentTurn ? $game->nextNick : $game->waitingNick), $e($t->get('TBLACK'))) ?>
+<?php else: ?>
+<?= sprintf($e($t->get('RESTURN')), $e($isCurrentTurn ? $game->nextNick : $game->waitingNick), $e($t->get('TWHITE'))) ?>
+<?php endif; ?>
+</font><br>
+
+<table border="0">
+<tr><td bgcolor="<?= $e($theme->colorBoardGrid) ?>">
+<table border="0" cellspacing="2">
+<tr><td bgcolor="<?= $e($theme->colorBoardMarginBg) ?>">&nbsp;</td>
+<?php for ($col = $swap === 1 ? 0 : 7; $swap === 1 ? $col <= 7 : $col >= 0; $col += $swap): ?>
+<td align="center" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e(chr(ord('A') + $col)) ?></font></td>
+<?php endfor; ?>
+<td bgcolor="<?= $e($theme->colorBoardMarginBg) ?>" align="center" valign="center">
+<a href="<?= $e($scriptName) ?>?ID=<?= $e(rawurlencode($idStr)) ?>&ACTION=VIEW&SWAP=<?= $e($swap * -1) ?>&NUM=<?= $e($number) ?>">
+<img src="<?= $e($config->imageUrl($swap === 1 ? $theme->swapIconWhiteTop : $theme->swapIconBlackTop)) ?>" alt="<?= $e($t->get($swap === 1 ? 'SWAP_TEXT0' : 'SWAP_TEXT1')) ?>" border="0" title="<?= $e($t->get($swap === 1 ? 'SWAP_TEXT0_LONG' : 'SWAP_TEXT1_LONG')) ?>"></a>
+</td></tr>
+
+<?php for ($row = $swap === 1 ? 0 : 7; $swap === 1 ? $row <= 7 : $row >= 0; $row += $swap): ?>
+<tr height="<?= $e($theme->fieldSize) ?>">
+<td align="center" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>">&nbsp;<font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e(8 - $row) ?></font>&nbsp;</td>
+<?php for ($col = $swap === 1 ? 0 : 7; $swap === 1 ? $col <= 7 : $col >= 0; $col += $swap):
+    $piece = $board->pieceAt($col, $row);
+    $squareColor = (($row + $col) % 2) ? $theme->colorBoardBlack : $theme->colorBoardWhite;
+    $icon = $pieces->describe($piece);
+    $altText = ctype_upper($piece) ? strtoupper($icon->shortName) : strtolower($icon->shortName);
+    $isHighlighted = $nextMove !== null && (
+        ($nextMove->fromFile === chr(ord('A') + $col) && $nextMove->fromRank === chr(ord('8') - $row))
+        || ($nextMove->toFile === chr(ord('A') + $col) && $nextMove->toRank === chr(ord('8') - $row))
+    );
+    ?>
+<td valign="center" align="center" width="<?= $e($theme->fieldSize) ?>" height="<?= $e($theme->fieldSize) ?>" bgcolor="<?= $e($squareColor) ?>">
+<?php if ($isHighlighted): ?><table border="0" bgcolor="<?= $e($theme->colorSelected) ?>" cellspacing="3" cellpadding="0"><tr><td bgcolor="<?= $e($squareColor) ?>"><?php endif; ?>
+<img border="0" src="<?= $e($icon->imageUrl) ?>" alt="<?= $e($altText) ?>" title="<?= $e($icon->longName) ?>">
+<?php if ($isHighlighted): ?></td></tr></table><?php endif; ?>
+</td>
+<?php endfor; ?>
+<td align="center" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>">&nbsp;<font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e(8 - $row) ?></font>&nbsp;</td>
+</tr>
+<?php endfor; ?>
+</table>
+</td></tr></table>
+
+<table border="0"><tr><td align="center" valign="center">
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="VIEW">
+<input type="hidden" name="ID" value="<?= $e($idStr) ?>">
+<input type="hidden" name="SWAP" value="<?= $e($swap) ?>">
+<?php if ($number > 0): ?>
+<input type="image" align="center" src="<?= $e($config->imageUrl($theme->arrowLeftEnd)) ?>" alt="<?= $e($t->get('ARROW_T_LL')) ?>" border="0" name="NUM0">
+<input type="image" align="center" src="<?= $e($config->imageUrl($theme->arrowLeft)) ?>" alt="<?= $e($t->get('ARROW_T_L')) ?>" border="0" name="NUM<?= $e($number - 1) ?>">
+<?php endif; ?>
+&nbsp;<font size="+1"><?= $e($number + 1) ?></font>&nbsp;
+<?php if ($number < $game->moveCount): ?>
+<input type="image" align="center" src="<?= $e($config->imageUrl($theme->arrowRight)) ?>" alt="<?= $e($t->get('ARROW_T_R')) ?>" border="0" name="NUM<?= $e($number + 1) ?>">
+<input type="image" align="center" src="<?= $e($config->imageUrl($theme->arrowRightEnd)) ?>" alt="<?= $e($t->get('ARROW_T_RR')) ?>" border="0" name="NUM<?= $e($game->moveCount) ?>">
+<?php endif; ?>
+</form>
+</td></tr></table>

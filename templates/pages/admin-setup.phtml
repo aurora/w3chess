@@ -1,0 +1,23 @@
+<?php
+/**
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var string $scriptName
+ * @var bool $passwordsDiffer
+ */
+$theme = $config->theme;
+?>
+<table border="0" bgcolor="<?= $e($theme->colorBoardGrid) ?>"><tr><td><table border="0" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><tr><td align="center">
+<?php if ($passwordsDiffer): ?>
+<b><font color="<?= $e($theme->colorWarn) ?>"><?= $e($t->get('ADMIN_PASSDIFFER')) ?></font></b><br>
+<?php endif; ?>
+<b><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($t->get('ADMIN_SPECIFY_PASS')) ?></font></b><br><br>
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="ADMIN">
+<table border="0">
+<tr><td>&nbsp;<b><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($t->get('ADMIN_PASS')) ?></font></b></td><td><input name="PASS1" type="password" size="<?= $e($theme->adminPassLength) ?>" maxlength="<?= $e($theme->adminPassLength) ?>">&nbsp;</td></tr>
+<tr><td>&nbsp;<b><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($t->get('ADMIN_PASS_RE')) ?></font></b></td><td><input name="PASS2" type="password" size="<?= $e($theme->adminPassLength) ?>" maxlength="<?= $e($theme->adminPassLength) ?>">&nbsp;</td></tr>
+</table>
+<br><input type="submit" value="<?= $e($t->get('ADMIN_OK')) ?>">
+</form>
+</td></tr></table></td></tr></table>

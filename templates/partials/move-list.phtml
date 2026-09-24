@@ -1,0 +1,58 @@
+<?php
+/**
+ * Ports the HTML branch of movesout().
+ *
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var \W3Chess\Chess\PieceCatalog $pieces
+ * @var string $scriptName
+ * @var \W3Chess\Game\Game $game
+ * @var string $id
+ * @var int $swap
+ */
+use W3Chess\Chess\MoveList;
+
+$list = MoveList::parse($game->moves);
+if ($list === []) {
+    return;
+}
+
+$order = $config->reverseMoveList ? range(count($list), 1, -1) : range(1, count($list));
+?>
+<br><b><u><?= $e($t->get('RESMOVES')) ?></u></b><br>
+<table border="0">
+<?php foreach ($order as $number):
+    $move = $list[$number - 1];
+    $movedBy = (($game->moveCount + $number) % 2) === 0 ? $game->waitingNick : $game->nextNick;
+    $movingIcon = $pieces->describe($move->movingPiece);
+    $resultIcon = $pieces->describe($move->resultPiece);
+    ?>
+<tr>
+<td align="center"><b><?= $e($number) ?></b></td>
+<td align="center"><img align="center" src="<?= $e($movingIcon->smallImageUrl) ?>" alt="<?= $e($movingIcon->longName) ?>" border="0"></td>
+<td align="left">
+<a href="<?= $e($scriptName) ?>?ACTION=VIEW&NUM=<?= $e($number - 1) ?>&ID=<?= $e(rawurlencode($id)) ?>&SWAP=<?= $e($swap) ?>" target="ViewWin"><?= $e($move->fromFile.$move->fromRank) ?> &raquo; <?= $e($move->toFile.$move->toRank) ?></a>
+<?php if ($move->capturedPiece !== 'e' || $move->isEnPassant()):
+    $capturedChar = match (true) {
+        $move->isEnPassant() && $move->movingPiece === 'P' => 'p',
+        $move->isEnPassant() && $move->movingPiece === 'p' => 'P',
+        default => $move->capturedPiece,
+    };
+    $capturedIcon = $pieces->describe($capturedChar);
+    ?>
+<img align="center" src="<?= $e($capturedIcon->smallSelectedImageUrl) ?>" alt="<?= $e($capturedIcon->longName) ?>" border="0">
+<?php endif; ?>
+<?php if ($move->movingPiece !== $move->resultPiece && !$move->isEnPassant()): ?>
+&rArr; <img align="center" src="<?= $e($resultIcon->smallImageUrl) ?>" alt="<?= $e($resultIcon->longName) ?>" border="0">
+<?php endif; ?>
+<?= match ($move->squares()) {
+    'E8G8', 'E1G1' => ' ('.$e($t->get('SMCKS')).')',
+    'E8C8', 'E1C1' => ' ('.$e($t->get('SMCQS')).')',
+    default => '',
+} ?>
+<?php if ($move->isEnPassant()): ?> (<?= $e($t->get('SMEP')) ?>)<?php endif; ?>
+</td>
+<td align="right">(<?= $e($movedBy) ?>)</td>
+</tr>
+<?php endforeach; ?>
+</table>

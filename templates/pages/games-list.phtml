@@ -1,0 +1,54 @@
+<?php
+/**
+ * Ports listgames(): the admin (full) or public (ACTION=LIST) games table.
+ *
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var string $scriptName
+ * @var bool $onlyList
+ * @var list<array{id: string, isOpen: bool, moveCount: int, nick1: string, mail1: string, nick2: string, mail2: string, lastAccess: string, pass: string}> $rows
+ */
+$theme = $config->theme;
+?>
+<table border="0" cellpadding="0" cellspacing="0"><tr bgcolor="<?= $e($theme->colorBoardGrid) ?>"><td><table cellpadding="3" cellspacing="3" border="0">
+<tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>">
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_TABLE_START')) ?></b></font></td>
+<td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_NUM')) ?></b></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_TABLE_P1')) ?></b></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_TABLE_P2')) ?></b></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_TABLE_ACC')) ?></b></font></td>
+<?php if (!$onlyList): ?>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_TABLE_PW')) ?></b></font></td>
+<?php if ($config->allowRemove): ?><td>&nbsp;</td><?php endif; ?>
+<?php endif; ?>
+</tr>
+<?php foreach ($rows as $row): $d = $row['id']; $offset = $row['isOpen'] ? 1 : 0; ?>
+<tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><td><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<a style="color:<?= $e($theme->colorBoardMarginFg) ?>" target="_blank" href="<?= $e($scriptName) ?>?ACTION=<?= $row['isOpen'] ? 'JOIN' : 'RESUME' ?>&ID=<?= $e(rawurlencode($d)) ?>">
+<?= $e(substr($d, 6 + $offset, 2)) ?>.<?= $e(substr($d, 4 + $offset, 2)) ?>.<?= $e(substr($d, 0 + $offset, 4)) ?>
+</a></font></td>
+<td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($row['moveCount']) ?></font></td>
+<?php if (!$onlyList): ?>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><a style="color:<?= $e($theme->colorBoardMarginFg) ?>" href="mailto:<?= $e($row['mail1']) ?>"><?= $e($row['nick1']) ?></a></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><a style="color:<?= $e($theme->colorBoardMarginFg) ?>" href="mailto:<?= $e($row['mail2']) ?>"><?= $e($row['nick2']) ?></a></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($row['lastAccess']) ?></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($row['pass']) ?></font></td>
+<?php if ($config->allowRemove): ?>
+<td>
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="ADMIN">
+<input type="hidden" name="DELETE" value="<?= $e($d) ?>">
+<input name="PASS3" type="password" size="<?= $e($theme->adminPassLength) ?>" maxlength="<?= $e($theme->adminPassLength) ?>">
+<input type="submit" value="<?= $e($t->get('ADMIN_DELETE')) ?>">
+</form>
+</td>
+<?php endif; ?>
+<?php else: ?>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($row['nick1']) ?></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($row['nick2']) ?></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($row['lastAccess']) ?></font></td>
+<?php endif; ?>
+</tr>
+<?php endforeach; ?>
+</table></td></tr></table>
+<br><b><a href="<?= $e($scriptName) ?>"><?= $e($t->get('ADMIN_END')) ?></a></b><br>

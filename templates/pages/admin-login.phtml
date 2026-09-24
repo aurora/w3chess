@@ -1,0 +1,26 @@
+<?php
+/**
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var string $scriptName
+ * @var bool $wrongPassword
+ */
+$theme = $config->theme;
+?>
+<?php if ($wrongPassword): ?>
+<table border="0" bgcolor="<?= $e($theme->colorBoardGrid) ?>"><tr><td><table border="0" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><tr><td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<b><font color="<?= $e($theme->colorWarn) ?>"><?= $e($t->get('ADMIN_WRONGPASS')) ?></font></b><br>
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="ADMIN">
+<br><input type="submit" value="<?= $e($t->get('ADMIN_OK')) ?>">
+</form>
+</font></td></tr></table></td></tr></table>
+<?php else: ?>
+<table border="0" bgcolor="<?= $e($theme->colorBoardGrid) ?>"><tr><td><table border="0" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><tr><td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="ADMIN">
+&nbsp;<b><?= $e($t->get('ADMIN_PASS')) ?></b>&nbsp;<input name="PASS3" type="password" size="<?= $e($theme->adminPassLength) ?>" maxlength="<?= $e($theme->adminPassLength) ?>">&nbsp;<br><br>
+<input type="submit" value="<?= $e($t->get('ADMIN_OK')) ?>"><br>
+</form>
+</font></td></tr></table></td></tr></table>
+<?php endif; ?>

@@ -6,7 +6,7 @@
 ._*
 
 # Custom folder icons
-Icon
+Icon
 
 # Volume root files
 .DocumentRevisions-V100
@@ -59,3 +59,14 @@ $RECYCLE.BIN/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+### Project
+# Composer dependencies (run `composer install` to restore)
+/vendor/
+
+# Game data and the admin password hash — runtime state, not source
+/games/*
+!/games/.gitkeep
+
+# C build artifact
+/w3chess.cgi

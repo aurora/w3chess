@@ -1,0 +1,25 @@
+<?php
+/**
+ * @var \W3Chess\Config\AppConfig $config
+ * @var string $message trusted (translator) HTML, not escaped
+ * @var string $scriptName
+ * @var string|null $pass
+ * @var string|null $id
+ * @var int $swap
+ */
+$theme = $config->theme;
+?>
+<table border="0" bgcolor="<?= $e($theme->colorBoardGrid) ?>"><tr><td><table border="0" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><tr><td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<b><?= $message ?></b><br><br>
+<?php if ($id !== null && $id !== ''): ?>
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="RESUME">
+<input type="hidden" name="ID" value="<?= $e($id) ?>">
+<?php if ($swap !== 0): ?><input type="hidden" name="SWAP" value="<?= $e($swap) ?>"><?php endif; ?>
+<?php if ($pass !== null && $pass !== ''): ?><input type="hidden" name="PASS" value="<?= $e($pass) ?>"><?php endif; ?>
+<input type="image" src="<?= $e($config->imageUrl($theme->buttonYes)) ?>" alt="<?= $e($msgOk) ?>" border="0">
+</form>
+<?php else: ?>
+<a href="<?= $e($scriptName) ?>"><img src="<?= $e($config->imageUrl($theme->buttonYes)) ?>" alt="<?= $e($msgOk) ?>" border="0"></a>
+<?php endif; ?>
+</font></td></tr></table></td></tr></table><br>

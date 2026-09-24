@@ -1,0 +1,16 @@
+<?php
+/**
+ * @var \W3Chess\Config\AppConfig $config
+ * @var string $scriptName
+ */
+?>
+</center>
+<table border="0" width="100%"><tr><td align="left">
+<a style="font-weight:bold;text-decoration:none;" target="_blank" href="<?= $e($config->theme->url) ?>" title="<?= $e($config->theme->title) ?>">&copy;</a></td>
+<td align="right">
+<?php if ($config->adminEnabled): ?>
+<a style="font-weight:bold;text-decoration:none;" href="<?= $e($scriptName) ?>?ACTION=ADMIN">&pi;</a></td></tr></table>
+<?php else: ?>
+<a style="font-weight:bold;text-decoration:none;" target="_blank" href="http://german.imdb.com/Title?0113957">&pi;</a></td></tr></table>
+<?php endif; ?>
+</body></html>

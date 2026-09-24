@@ -1,0 +1,39 @@
+<?php
+/**
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var string $scriptName
+ * @var \W3Chess\Game\Game $game
+ * @var string $existingNick
+ * @var string $missingNickField "NICK1"|"NICK2"
+ * @var string $missingMailField "MAIL1"|"MAIL2"
+ * @var string $existingNickField "NICK1"|"NICK2"
+ * @var string $existingMailField "MAIL1"|"MAIL2"
+ * @var string $existingMail
+ */
+$theme = $config->theme;
+$messageText = $game->messageText();
+?>
+<table border="0" width="*"><tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><td align="center">
+<font size="+1" color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('STARTANEWGAME')) ?></b></font>
+</td></tr><tr><td align="center">
+<?php if ($messageText !== null): ?>
+<b><?= $e($t->get('RESMESSAGE')) ?>: <font color="<?= $e($theme->colorMessage) ?>"><?= $e($messageText) ?></font></b><br><br>
+<?php endif; ?>
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="NEW">
+<input type="hidden" name="JOINID" value="<?= $e((string) $game->id) ?>">
+<input type="hidden" name="WHITE" value="1">
+<table border="0"><tr>
+<td><?= $e($t->get($existingNickField === 'NICK1' ? 'STARTGAMENICK1' : 'STARTGAMENICK2')) ?>: </td><td><b><?= $e($existingNick) ?></b></td>
+</tr><tr>
+<td><?= $e($t->get($missingNickField === 'NICK1' ? 'STARTGAMENICK1' : 'STARTGAMENICK2')) ?>: </td><td><input type="text" name="<?= $e($missingNickField) ?>" size="<?= $e($theme->nickLength) ?>"></td>
+</tr><tr>
+<td><?= $e($t->get($missingMailField === 'MAIL1' ? 'STARTGAMEMAIL1' : 'STARTGAMEMAIL2')) ?>: </td><td><input type="text" name="<?= $e($missingMailField) ?>" size="<?= $e($theme->mailLength) ?>"></td>
+</tr></table>
+<input type="hidden" name="<?= $e($existingNickField) ?>" value="<?= $e($existingNick) ?>">
+<input type="hidden" name="<?= $e($existingMailField) ?>" value="<?= $e($existingMail) ?>">
+<br><?= $e($t->get('RESMESSAGE')) ?>: <input type="text" name="MESSAGE" size="<?= $e($theme->messageBoxLength) ?>" value="">
+<br><br><input type="submit" value="<?= $e($t->get('STARTNEW')) ?>">
+</form>
+</td></tr></table>

@@ -1,0 +1,32 @@
+<?php
+/**
+ * Ports the SPECIAL=EMAIL settings form from resumegame().
+ *
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var string $scriptName
+ * @var \W3Chess\Game\Game $game
+ * @var int $swap
+ */
+$theme = $config->theme;
+$fixedPass = $game->nextHasFixedPass ? $game->pass : '';
+?>
+<br><table border="0" bgcolor="<?= $e($theme->colorBoardGrid) ?>"><tr><td><table border="0" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><tr><td align="left"><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ACTION" value="CHMAIL">
+<input type="hidden" name="PASS" value="<?= $e($game->pass) ?>">
+<input type="hidden" name="ID" value="<?= $e((string) $game->id) ?>">
+<input type="hidden" name="SWAP" value="<?= $e($swap) ?>">
+<b><?= sprintf($e($t->get('RESMAILOF')), $e($game->nextNick)) ?>:</b>
+<input type="text" name="MAIL1" value="<?= $e($game->nextMail) ?>" size="<?= $e($theme->mailLength) ?>"><br><br>
+<table border="0" cellpadding="0" cellspacing="0">
+<tr><td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('RESFIXPASS')) ?>: </b></font></td>
+<td><input type="password" name="FIXPASS" value="<?= $e($fixedPass) ?>" size="10"></td></tr>
+<tr><td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('RESFIXPASSA')) ?>: </b></font></td>
+<td><input type="password" name="FIXPASSA" value="<?= $e($fixedPass) ?>" size="10"></td></tr>
+</table>
+<br><font size="-2">(<?= $t->get('RESPASSWARN') ?>)</font><br>
+<br><input type="checkbox" name="NOMAILTOME"<?= $game->noMailToNext ? ' checked' : '' ?>> <?= $e($t->get('RESNOMAILTOME')) ?><br><br>
+<center><input type="submit" value="<?= $e($t->get('MSGOK')) ?>"></center>
+</font></td></tr></table></td></tr></table><br>
+</form>

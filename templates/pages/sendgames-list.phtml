@@ -1,0 +1,34 @@
+<?php
+/**
+ * Ports the ONLYWEB branch of sendgames(): an HTML table of one player's games instead of a mail.
+ *
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var string $scriptName
+ * @var string $mail
+ * @var list<array{id: string, moveCount: int, opponentNick: string, lastAccess: string, isYourTurn: bool, finished: bool}> $rows
+ */
+$theme = $config->theme;
+?>
+<br><b><?= $e($t->get('ADMIN_GAMES_OF')) ?>:</b> <?= $e($mail) ?><br><br>
+<table border="0" cellspacing="0" cellpadding="0"><tr bgcolor="<?= $e($theme->colorBoardGrid) ?>"><td><table cellpadding="3" cellspacing="3">
+<tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>">
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_TABLE_START')) ?></b></font></td>
+<td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_NUM')) ?></b></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_AGAINST')) ?></b></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_TABLE_ACC')) ?></b></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b><?= $e($t->get('ADMIN_STATUS')) ?></b></font></td>
+</tr>
+<?php foreach ($rows as $row): ?>
+<tr bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><td><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<?= $e(substr($row['id'], 6, 2)) ?>.<?= $e(substr($row['id'], 4, 2)) ?>.<?= $e(substr($row['id'], 0, 4)) ?>
+</font></td>
+<td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($row['moveCount']) ?></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($row['opponentNick']) ?></font></td>
+<td><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e($row['lastAccess']) ?></font></td>
+<td align="center"><a href="http://<?= $e($_SERVER['SERVER_NAME'] ?? '') ?><?= $e($scriptName) ?>?ID=<?= $e(rawurlencode($row['id'])) ?>&ACTION=RESUME"><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<?= $e($t->get($row['finished'] ? 'ADMIN_STATUS_FIN' : ($row['isYourTurn'] ? 'ADMIN_STATUS_YOU' : 'ADMIN_STATUS_NOT_YOU'))) ?>
+</font></a></td></tr>
+<?php endforeach; ?>
+</table></td></tr></table>
+<br>[<a href="http://<?= $e($_SERVER['SERVER_NAME'] ?? '') ?><?= $e($scriptName) ?>"><?= $e($t->get('SENDBACK')) ?></a>]

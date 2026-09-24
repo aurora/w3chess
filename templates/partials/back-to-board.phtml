@@ -1,0 +1,27 @@
+<?php
+/**
+ * @var \W3Chess\Config\AppConfig $config
+ * @var string $message trusted (translator) HTML, not escaped
+ * @var string $scriptName
+ * @var string|null $pass
+ * @var string|null $id
+ * @var int $swap
+ * @var int $waitTime
+ * @var string $msgOk
+ */
+$theme = $config->theme;
+
+$url = $scriptName;
+if ($id !== null && $id !== '') {
+    $url .= '?ACTION=RESUME&ID='.rawurlencode($id).'&SWAP='.$swap;
+    if ($pass !== null && $pass !== '') {
+        $url .= '&PASS='.rawurlencode($pass);
+    }
+}
+?>
+<table border="0" bgcolor="<?= $e($theme->colorBoardGrid) ?>"><tr><td><table border="0" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><tr><td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<b><?= $message ?></b><br>
+<meta http-equiv="refresh" content="<?= $e($waitTime) ?>; URL=<?= $e($url) ?>">
+<br><a href="<?= $e($url) ?>"><img src="<?= $e($config->imageUrl($theme->buttonYes)) ?>" alt="<?= $e($msgOk) ?>" border="0"></a>
+<br>
+</font></td></tr></table></td></tr></table><br>

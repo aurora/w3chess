@@ -1,0 +1,172 @@
+<?php
+/**
+ * @var \W3Chess\Config\AppConfig $config
+ * @var \W3Chess\Lang\Translator $t
+ * @var \W3Chess\Chess\PieceCatalog $pieces
+ * @var string $scriptName
+ * @var \W3Chess\Game\Game $game
+ * @var \W3Chess\Game\GameId $id
+ * @var int $swap
+ * @var int $redFrames
+ * @var int $mate
+ * @var bool $reqRemis
+ * @var string $pass
+ * @var string $message
+ * @var bool $isChange
+ * @var int $fromX
+ * @var int $fromY
+ * @var int $toX
+ * @var int $toY
+ * @var bool $moveTo
+ * @var bool $blacksTurn
+ * @var \W3Chess\Chess\MoveValidator $validator
+ */
+$theme = $config->theme;
+$idStr = (string) $id;
+?>
+<font size="+1">
+<?php if ($blacksTurn): ?>
+<?= sprintf($e($t->get('RESTITLE')), $e($game->waitingNick), $e($game->nextNick)) ?>
+<?php else: ?>
+<?= sprintf($e($t->get('RESTITLE')), $e($game->nextNick), $e($game->waitingNick)) ?>
+<?php endif; ?>
+</font><br>
+<?php if (!$reqRemis && $mate === 0): ?>
+<?= sprintf($e($t->get('RESTURN')), $e($game->nextNick), $e($t->get($blacksTurn ? 'TBLACK' : 'TWHITE'))) ?>
+<?php endif; ?>
+<?php if ($reqRemis): ?><?= sprintf($e($t->get('RESTURNR')), $e($game->nextNick)) ?><?php endif; ?>
+<?php if ($mate === 0): ?><br><?php endif; ?>
+
+<?php if ($isChange): ?>
+<table border="0" bgcolor="<?= $e($theme->colorBoardGrid) ?>"><tr><td><table border="0" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><tr><td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>"><b>
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ID" value="<?= $e($idStr) ?>">
+<input type="hidden" name="ACTION" value="MOVED">
+<input type="hidden" name="SWAP" value="<?= $e($swap) ?>">
+<input type="hidden" name="PASS" value="<?= $e($pass) ?>">
+<input type="hidden" name="MOVE" value="<?= $e(chr($fromX).(string) $fromY.chr($toX).(string) $toY) ?>">
+<input type="hidden" name="MESSAGE" value="<?= $e($message) ?>">
+<?= $e($t->get('RESCHANGE')) ?>
+<table border="0"><tr>
+<?php foreach ($blacksTurn ? ['q', 'r', 'b', 'n'] : ['Q', 'R', 'B', 'N'] as $piece): $icon = $pieces->describe($piece); ?>
+<td><input type="image" name="CHANGE=<?= $e($piece) ?>" value="<?= $e($piece) ?>" src="<?= $e($icon->imageUrl) ?>" alt="<?= $e($icon->longName) ?>"></td>
+<?php endforeach; ?>
+</tr></table>
+</form>
+</b></font></td></tr></table></td></tr></table>
+<?php else: ?>
+<?php if ($mate !== 0):
+    $mateText = match ($mate) {
+        1 => sprintf('%s, %s !', $t->get('MATE'), $game->nextNick),
+        2 => sprintf('%s, %s !', $t->get('CHECK'), $game->nextNick),
+        3 => $t->get('MAILISREMIS'),
+        4 => sprintf($t->get('MAILGIVESUP'), $game->nextNick),
+        default => null,
+    };
+    if ($mateText !== null): ?>
+    <font color="<?= $e($theme->colorWarn) ?>"><b><?= $e($mateText) ?></b></font><br>
+<?php endif; endif;
+$messageText = $game->messageText();
+if ($messageText !== null && $messageText !== ''): ?>
+<b><?= $e($t->get('RESMESSAGE')) ?>: <font color="<?= $e($theme->colorMessage) ?>"><?= $e($messageText) ?></font></b><br>
+<?php endif; ?>
+<?php endif; ?>
+
+<?php if ($mate === 0): ?>
+<form action="<?= $e($scriptName) ?>" method="post">
+<input type="hidden" name="ID" value="<?= $e($idStr) ?>">
+<input type="hidden" name="ACTION" value="<?= $moveTo ? 'MOVED' : 'RESUME' ?>">
+<input type="hidden" name="GNUMMOVES" value="<?= $e($game->moveCount) ?>">
+<input type="hidden" name="SWAP" value="<?= $e($swap) ?>">
+<input type="hidden" name="RF" value="<?= $e($redFrames) ?>">
+<?php if (!$isChange): ?>
+<?= $e($t->get('RESPASS')) ?>: <input type="password" name="PASS" value="<?= $e($pass) ?>">
+<?php endif; ?>
+<br>
+<?php endif; ?>
+
+<?php if ($reqRemis): ?>
+<br><table border="0" bgcolor="<?= $e($theme->colorBoardGrid) ?>"><tr><td><table border="0" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><tr><td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<b><?= $e($t->get('RESREMREQ')) ?></b></font></td></tr><tr><td nowrap align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<input type="image" name="REQREMIS=YES" value="TUX" src="<?= $e($config->imageUrl($theme->buttonYes)) ?>" alt="<?= $e($t->get('MSGACCEPT')) ?>" border="0" align="middle"><?= $e($t->get('MSGACCEPT')) ?>&nbsp;&nbsp;&nbsp;
+<input type="image" name="REQREMIS=NO" value="TUX" src="<?= $e($config->imageUrl($theme->buttonNo)) ?>" alt="<?= $e($t->get('MSGDIS')) ?>" border="0" align="middle"><?= $e($t->get('MSGDIS')) ?>
+</font></td></tr></table></td></tr></table><br>
+<?php endif; ?>
+
+<table border="0">
+<tr><td bgcolor="<?= $e($theme->colorBoardGrid) ?>">
+<table border="0" cellspacing="2">
+<tr>
+<td bgcolor="<?= $e($theme->colorBoardMarginBg) ?>" align="center" valign="center">
+<a href="<?= $e($scriptName) ?>?ACTION=RESUME&PASS=<?= $e(rawurlencode($pass)) ?>&ID=<?= $e(rawurlencode($idStr)) ?>&SWAP=<?= $e($swap) ?>&RF=<?= $e(1 - $redFrames) ?>&MOVE=<?= $fromX !== 0 && $fromY !== 0 ? $e(chr($fromX).(string) $fromY) : '' ?>&MESSAGE=<?= $e(rawurlencode($message)) ?>"><img src="<?= $e($config->imageUrl($theme->redframeIcon)) ?>" alt="R" border="0" title="<?= $e($t->get('REDFRAME_TEXT_LONG')) ?>"></a>
+</td>
+<?php for ($col = $swap === 1 ? 0 : 7; $swap === 1 ? $col <= 7 : $col >= 0; $col += $swap): ?>
+<td align="center" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e(chr(ord('A') + $col)) ?></font></td>
+<?php endfor; ?>
+<td bgcolor="<?= $e($theme->colorBoardMarginBg) ?>" align="center" valign="center">
+<a href="<?= $e($scriptName) ?>?PASS=<?= $e(rawurlencode($pass)) ?>&ID=<?= $e(rawurlencode($idStr)) ?>&ACTION=RESUME&SWAP=<?= $e($swap * -1) ?>&RF=<?= $e($redFrames) ?>&MOVE=<?= $fromX !== 0 && $fromY !== 0 ? $e(chr($fromX).(string) $fromY) : '' ?>&MESSAGE=<?= $e(rawurlencode($message)) ?>">
+<img src="<?= $e($config->imageUrl($swap === 1 ? $theme->swapIconWhiteTop : $theme->swapIconBlackTop)) ?>" alt="<?= $e($t->get($swap === 1 ? 'SWAP_TEXT0' : 'SWAP_TEXT1')) ?>" border="0" title="<?= $e($t->get($swap === 1 ? 'SWAP_TEXT0_LONG' : 'SWAP_TEXT1_LONG')) ?>"></a>
+</td>
+</tr>
+
+<?php for ($row = $swap === 1 ? 0 : 7; $swap === 1 ? $row <= 7 : $row >= 0; $row += $swap): ?>
+<tr height="<?= $e($theme->fieldSize) ?>">
+<td align="center" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>">&nbsp;<font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e(8 - $row) ?></font>&nbsp;</td>
+<?php for ($col = $swap === 1 ? 0 : 7; $swap === 1 ? $col <= 7 : $col >= 0; $col += $swap):
+    $piece = $game->board->pieceAt($col, $row);
+    $squareColor = (($row + $col) % 2) ? $theme->colorBoardBlack : $theme->colorBoardWhite;
+    $canMoveHere = !$isChange && !$reqRemis && $mate !== 3 && $mate !== 4 && $validator->canMove($fromX, $fromY, $col, $row);
+    $icon = $pieces->describe($piece);
+    $altText = ctype_upper($piece) ? strtoupper($icon->shortName) : strtolower($icon->shortName);
+    $isFromSelected = $fromX === ord('A') + $col && $fromY === 8 - $row;
+    $isToSelected = $isChange && $toX === ord('A') + $col && $toY === 8 - $row;
+    ?>
+<td valign="center" align="center" width="<?= $e($theme->fieldSize) ?>" height="<?= $e($theme->fieldSize) ?>" bgcolor="<?= $e($squareColor) ?>">
+<?php if ($isFromSelected || $isToSelected): ?><table border="0" bgcolor="<?= $e($theme->colorSelected) ?>" cellspacing="3" cellpadding="0"><tr><td bgcolor="<?= $e($squareColor) ?>"><?php endif; ?>
+<?php if ($canMoveHere):
+    if ($redFrames === 1): ?><table border="0" bgcolor="red" cellspacing="3" cellpadding="0"><tr><td bgcolor="<?= $e($squareColor) ?>"><?php endif;
+    $moveName = $moveTo ? sprintf('MOVE=%s%d%s%d', chr($fromX), $fromY, chr(ord('A') + $col), 8 - $row) : sprintf('MOVE=%s%d', chr(ord('A') + $col), 8 - $row);
+    ?><input type="image" src="<?= $e($icon->imageUrl) ?>" alt="<?= $e($altText) ?>" name="<?= $e($moveName) ?>" value="TUX" title="<?= $e($icon->longName) ?>">
+<?php if ($redFrames === 1): ?></td></tr></table><?php endif; ?>
+<?php else: ?>
+    <?php if ($isFromSelected): ?>
+    <input type="image" src="<?= $e($icon->imageUrl) ?>" alt="<?= $e($altText) ?>" name="MOVE=CANC" value="TUX" title="<?= $e($icon->longName) ?>">
+    <?php else: ?>
+    <img border="0" src="<?= $e($icon->imageUrl) ?>" alt="<?= $e($altText) ?>" title="<?= $e($icon->longName) ?>">
+    <?php endif; ?>
+<?php endif; ?>
+<?php if ($isFromSelected || $isToSelected): ?></td></tr></table><?php endif; ?>
+</td>
+<?php endfor; ?>
+<td align="center" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>">&nbsp;<font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e(8 - $row) ?></font>&nbsp;</td>
+</tr>
+<?php endfor; ?>
+
+<tr><td bgcolor="<?= $e($theme->colorBoardMarginBg) ?>">&nbsp;</td>
+<?php for ($col = $swap === 1 ? 0 : 7; $swap === 1 ? $col <= 7 : $col >= 0; $col += $swap): ?>
+<td align="center" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><font color="<?= $e($theme->colorBoardMarginFg) ?>"><?= $e(chr(ord('A') + $col)) ?></font></td>
+<?php endfor; ?>
+<td bgcolor="<?= $e($theme->colorBoardMarginBg) ?>">&nbsp;</td></tr>
+</table>
+</td></tr></table>
+
+<?php if ($mate === 0): ?>
+<?php if (!$reqRemis): ?>
+<br><table border="0" bgcolor="<?= $e($theme->colorBoardGrid) ?>"><tr><td><table border="0" bgcolor="<?= $e($theme->colorBoardMarginBg) ?>"><tr><td align="center"><font color="<?= $e($theme->colorBoardMarginFg) ?>">
+<input type="radio" name="SPECIAL" value="PASS"><?= $e($t->get('SPECIALRESENT')) ?>
+&nbsp;<input type="radio" name="SPECIAL" value="REMIS"><?= $e($t->get('SPECIALREMIS')) ?>
+&nbsp;<input type="radio" name="SPECIAL" value="GIVEUP"><?= $e($t->get('SPECIALGIVEUP')) ?>
+&nbsp;<input type="radio" name="SPECIAL" value="EMAIL"><?= $e($t->get('SPECIALSETTINGS')) ?>
+&nbsp;<input type="radio" name="SPECIAL" value="LOGOUT"><?= $e($t->get('SPECIALLOGOUT')) ?>
+&nbsp;<br><input type="submit" value="<?= $e($t->get('SPECIALDO')) ?>">
+</font></td></tr></table></td></tr></table>
+<?php endif; ?>
+<br><?= $e($t->get('RESMESSAGE')) ?>:<br><input type="text" size="<?= $e($theme->messageBoxLength) ?>" name="MESSAGE" value="<?= $e($message) ?>">
+</form>
+<?php endif; ?>
+
+<?php if (!$isChange): ?>
+<?= $this->render('partials/move-list', ['game' => $game, 'id' => $idStr, 'swap' => $swap, 'config' => $config, 't' => $t, 'pieces' => $pieces, 'scriptName' => $scriptName]) ?>
+<?php endif; ?>
+
+<br><font size="-1"><b><?= $e($t->get('RESID')) ?>: <?= $e($idStr) ?> &nbsp;&nbsp;&nbsp; <?= $e($t->get('RESSTART')) ?>: <?= $e($idStr[6]) ?><?= $e($idStr[7]) ?>.<?= $e($idStr[4]) ?><?= $e($idStr[5]) ?>.<?= $e($idStr[0]) ?><?= $e($idStr[1]) ?><?= $e($idStr[2]) ?><?= $e($idStr[3]) ?></font>
