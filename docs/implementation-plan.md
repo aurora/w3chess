@@ -98,3 +98,8 @@ docs/adr/                # Architecture Decision Records
   with browser detection and `?lang=` override, board with legal-move hints,
   lobby and game view. `dotnet fable` and `vite build` succeed. Still open: the
   archive page, and an end-to-end run against MailDev (server + client together).
+- 2026-11-02: Found that `Fable.Remoting.Client`'s reflection decoder breaks under
+  Fable 5 (options/lists misread as unions). Replaced the client API with explicit
+  `fetch` + `JSON.parse` decoding (ADR 0007); collections cross the wire as
+  arrays. Verified end-to-end against the running server (list, create, get,
+  validate, submit move). Still open: archive page; manual browser/MailDev pass.
