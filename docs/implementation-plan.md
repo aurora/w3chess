@@ -64,16 +64,16 @@ docs/adr/                # Architecture Decision Records
 - [x] Integration tests for the full game flow
 
 ### Client (`W3Chess.Client`)
-- [ ] Fable + Feliz + Vite + Tailwind project setup
-- [ ] Theme layer: dark (studio) and light (zen) tokens, persisted switch
-- [ ] i18n: `I18n.fs` with `En`/`De`, language switch, `?lang=` override
-- [ ] Board component (highlighting, drag/click, flip), legal-move hints
-- [ ] Lobby: new game, resume, digest request, open tables
-- [ ] Game view: match strip, board, move console, PGN history, actions
+- [x] Fable + Feliz + Vite + Tailwind project setup
+- [x] Theme layer: dark (studio) and light (zen) tokens, persisted switch
+- [x] i18n: `I18n.fs` with `En`/`De`, language switch, `?lang=` override
+- [x] Board component (click selection, legal-move hints, last-move and flip)
+- [x] Lobby: new game, resume, digest request, open tables
+- [x] Game view: match strip, board, move console, PGN history, actions
 - [ ] Archive
 
 ### Cross-cutting
-- [ ] English and German for all UI strings and email templates in the same
+- [x] English and German for all UI strings and email templates in the same
       commit that introduces them
 
 ## Later (not in M1)
@@ -93,3 +93,8 @@ docs/adr/                # Architecture Decision Records
   API implemented; integration tests green; `/health` and the remoting endpoint
   verified against a running Kestrel host. Next: the Fable client (project setup,
   theme layer, i18n, board, lobby, game view).
+- 2026-11-02: Fable + Feliz client implemented with Vite and Tailwind: typed
+  remoting client, credentials in `localStorage`, dark/light theme, EN/DE i18n
+  with browser detection and `?lang=` override, board with legal-move hints,
+  lobby and game view. `dotnet fable` and `vite build` succeed. Still open: the
+  archive page, and an end-to-end run against MailDev (server + client together).
