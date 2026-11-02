@@ -66,6 +66,7 @@ type GameService(settings: AppSettings, notifier: Notifier) =
                   FromSquare = (match parsed with Some m -> m.From | None -> 0)
                   ToSquare = (match parsed with Some m -> m.To | None -> 0)
                   Message = (if move.Message = "" then None else Some move.Message) })
+            |> List.toArray
 
         let status =
             match game.Status with
@@ -315,7 +316,7 @@ type GameService(settings: AppSettings, notifier: Notifier) =
                           Color = colorOfChar gamePlayer.Color })
         }
 
-    member _.ListOpenGames() : Async<OpenGame list> =
+    member _.ListOpenGames() : Async<OpenGame[]> =
         async {
             use connection = connect ()
 
@@ -333,6 +334,7 @@ type GameService(settings: AppSettings, notifier: Notifier) =
                           Creator = player.Nickname
                           CreatedAt = game.CreatedAt
                           Message = (if game.LastMessage = "" then None else Some game.LastMessage) }))
+                |> Array.ofList
         }
 
     /// Validates credentials and returns the game, game player and open connection.

@@ -138,7 +138,7 @@ let ``create an open game, join, and exchange moves`` () =
             Assert.False(illegal.Ok)
 
             let! after = service.GetGame alice.GameId
-            Assert.Equal<string list>([ "e4"; "e5"; "d4" ], after.Value.Moves |> List.map (fun m -> m.San))
+            Assert.Equal<string list>([ "e4"; "e5"; "d4" ], after.Value.Moves |> Array.map (fun m -> m.San) |> Array.toList)
             Assert.Equal(Color.Black, after.Value.SideToMove)
             Assert.True(mails.Count >= 5, sprintf "expected several mails, got %d" mails.Count)
         }

@@ -54,7 +54,7 @@ type GameView =
       Status: GameStatus
       Result: string option
       Fen: string
-      Moves: MoveView list
+      Moves: MoveView[]
       Message: string option
       DrawOfferPending: bool }
 
@@ -99,5 +99,5 @@ type IW3ChessApi =
       Resign: ActionRequest -> Async<ActionResponse>
       OfferDraw: ActionRequest -> Async<ActionResponse>
       AcceptDraw: ActionRequest -> Async<ActionResponse>
-      ListOpenGames: unit -> Async<OpenGame list>
+      ListOpenGames: unit -> Async<OpenGame[]>
       RequestDigest: DigestRequest -> Async<ActionResponse> }
