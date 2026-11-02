@@ -13,12 +13,13 @@ open W3Chess.Client.Pages
 type Route =
     | Lobby
     | Game of gameId: string * token: string option
+    | Auth of token: string
 
-let private parseToken (query: string) =
+let private parseQueryParam (name: string) (query: string) =
     query.Split('&')
     |> Array.tryPick (fun pair ->
         match pair.Split('=') with
-        | [| "token"; value |] -> Some value
+        | [| key; value |] when key = name -> Some value
         | _ -> None)
 
 let private parseRoute (hash: string) : Route =
@@ -32,7 +33,11 @@ let private parseRoute (hash: string) : Route =
     let segments = path.Split('/') |> Array.filter (fun segment -> segment <> "")
 
     match segments with
-    | [| "game"; gameId |] -> Game(gameId, parseToken query)
+    | [| "game"; gameId |] -> Game(gameId, parseQueryParam "token" query)
+    | [| "auth" |] ->
+        match parseQueryParam "token" query with
+        | Some token -> Auth token
+        | None -> Lobby
     | _ -> Lobby
 
 let private openGame (gameId: string) = window.location.hash <- "#/game/" + gameId
@@ -42,22 +47,16 @@ let private browserLanguage () : string =
     let language: obj = window?navigator?language
     if isNull language then "en" else string language
 
-let private queryParam (name: string) (query: string) =
-    query.Split('&')
-    |> Array.tryPick (fun pair ->
-        match pair.Split('=') with
-        | [| key; value |] when key = name -> Some value
-        | _ -> None)
-
 /// `?lang=en|de`, either in the search string or in the hash query.
 let private languageOverride () =
-    let fromSearch = queryParam "lang" (window.location.search.TrimStart('?'))
+    let fromSearch = parseQueryParam "lang" (window.location.search.TrimStart('?'))
+
     let fromHash =
         let hash = window.location.hash
 
         match hash.IndexOf('?') with
         | -1 -> None
-        | index -> queryParam "lang" (hash.Substring(index + 1))
+        | index -> parseQueryParam "lang" (hash.Substring(index + 1))
 
     match fromSearch, fromHash with
     | Some code, _ -> Some(I18n.ofCode code)
@@ -84,6 +83,11 @@ let App () =
         )
 
     let route, setRoute = React.useState (parseRoute window.location.hash)
+    let account, setAccount = React.useState (Api.currentAccount ())
+    let authError, setAuthError = React.useState (None: string option)
+    let loginEmail, setLoginEmail = React.useState ("")
+    let loginNotice, setLoginNotice = React.useState (false)
+    let loginError, setLoginError = React.useState (None: string option)
     let t = I18n.ofLang lang
 
     React.useEffect (
@@ -91,6 +95,56 @@ let App () =
             let handler = fun (_: Browser.Types.Event) -> setRoute (parseRoute window.location.hash)
             window.addEventListener ("hashchange", handler)),
         [||]
+    )
+
+    // Validate a stored session once on start-up.
+    React.useEffect (
+        (fun () ->
+            match Api.currentSession () with
+            | Some session ->
+                async {
+                    try
+                        let! current = Api.getAccount session
+
+                        match current with
+                        | Some value -> setAccount (Some value)
+                        | None ->
+                            Api.clearSession ()
+                            setAccount None
+                    with _ -> ()
+                }
+                |> Async.StartImmediate
+            | None -> ()),
+        [||]
+    )
+
+    let authToken =
+        match route with
+        | Auth token -> token
+        | _ -> ""
+
+    // Complete a magic-link login when the auth route carries a token.
+    React.useEffect (
+        (fun () ->
+            if authToken = "" then
+                ()
+            else
+                async {
+                    try
+                        let! result = Api.completeLogin authToken
+
+                        match result with
+                        | Ok session ->
+                            Api.saveSession session
+                            setAccount (Some session.Account)
+                            setAuthError None
+                            goLobby ()
+                        | Error message -> setAuthError (Some message)
+                    with ex ->
+                        setAuthError (Some ex.Message)
+                }
+                |> Async.StartImmediate),
+        [| box authToken |]
     )
 
     React.useEffect (
@@ -121,6 +175,65 @@ let App () =
             prop.text label
         ]
 
+    let requestLogin () =
+        async {
+            try
+                let! response = Api.requestLogin { Email = loginEmail; Language = I18n.code lang }
+
+                if response.Ok then
+                    setLoginNotice true
+                    setLoginError None
+                else
+                    setLoginError response.Error
+            with ex ->
+                setLoginError (Some ex.Message)
+        }
+        |> Async.StartImmediate
+
+    let logout () =
+        Api.clearSession ()
+        setAccount None
+
+    let accountArea =
+        match account with
+        | Some value ->
+            Html.div [
+                prop.className "flex items-center gap-2"
+                prop.children [
+                    Html.span [
+                        prop.className "text-sm text-on-surface-variant"
+                        prop.text value.Nickname
+                    ]
+                    navButton false t.Logout logout
+                ]
+            ]
+        | None ->
+            Html.div [
+                prop.className "flex flex-col items-end gap-1"
+                prop.children [
+                    Html.div [
+                        prop.className "flex items-center gap-1"
+                        prop.children [
+                            Html.input [
+                                prop.className
+                                    "h-9 w-40 px-2 rounded border border-outline-variant bg-surface-container-lowest text-on-surface text-sm focus:outline-none focus:border-primary"
+                                prop.placeholder t.YourEmail
+                                prop.value loginEmail
+                                prop.onChange setLoginEmail
+                            ]
+                            navButton false t.Login requestLogin
+                        ]
+                    ]
+                    (if loginNotice then
+                         Html.span [ prop.className "text-[10px] text-secondary"; prop.text t.CheckEmail ]
+                     else
+                         Html.none)
+                    (match loginError with
+                     | Some message -> Html.span [ prop.className "text-[10px] text-error"; prop.text message ]
+                     | None -> Html.none)
+                ]
+            ]
+
     Html.div [
         prop.className "min-h-screen flex flex-col bg-background text-on-background"
         prop.children [
@@ -133,10 +246,7 @@ let App () =
                             Html.div [
                                 prop.className "flex items-center gap-3"
                                 prop.children [
-                                    Html.span [
-                                        prop.className "text-2xl"
-                                        prop.text "\u265A"
-                                    ]
+                                    Html.span [ prop.className "text-2xl"; prop.text "\u265A" ]
                                     Html.div [
                                         prop.children [
                                             Html.div [
@@ -155,6 +265,7 @@ let App () =
                                 prop.className "flex items-center gap-2"
                                 prop.children [
                                     navButton (route = Lobby) t.Lobby goLobby
+                                    accountArea
                                     Html.button [
                                         prop.type'.button
                                         prop.className
@@ -187,6 +298,17 @@ let App () =
                               Token = token
                               Lang = lang
                               OnBack = goLobby }
+                    | Auth _ ->
+                        Html.div [
+                            prop.className
+                                "max-w-6xl mx-auto px-6 py-16 flex flex-col gap-3 items-center text-center"
+                            prop.children [
+                                Html.span [ prop.className "text-on-surface"; prop.text t.Loading ]
+                                (match authError with
+                                 | Some message -> Html.p [ prop.className "text-sm text-error"; prop.text message ]
+                                 | None -> Html.none)
+                            ]
+                        ]
                 ]
             ]
         ]

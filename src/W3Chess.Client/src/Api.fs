@@ -126,6 +126,18 @@ let private decodeArchiveGame (json: obj) : ArchiveGame =
       Result = optValue json?Result
       UpdatedAt = unbox json?UpdatedAt }
 
+let private decodeAccount (json: obj) : AccountInfo =
+    { Email = unbox json?Email
+      Nickname = unbox json?Nickname
+      Language = unbox json?Language }
+
+let private encodeAccount (account: AccountInfo) : obj =
+    createObj [
+        "Email" ==> account.Email
+        "Nickname" ==> account.Nickname
+        "Language" ==> account.Language
+    ]
+
 let private decodeAction (json: obj) : ActionResponse =
     { Ok = unbox json?Ok
       Error = optValue json?Error }
@@ -142,6 +154,40 @@ let listGamesForEmail (email: string) : Async<ArchiveGame[]> =
         return (unbox<obj[]> (jsonParse text)) |> Array.map decodeArchiveGame
     }
 
+let requestLogin (request: LoginRequest) : Async<ActionResponse> =
+    async {
+        let body =
+            createObj [
+                "Email" ==> request.Email
+                "Language" ==> request.Language
+            ]
+
+        let! text = post "RequestLogin" [| body |]
+        return decodeAction (jsonParse text)
+    }
+
+let completeLogin (token: string) : Async<Result<AccountSession, string>> =
+    async {
+        let! text = post "CompleteLogin" [| box token |]
+        let json = jsonParse text
+        let ok = json?Ok
+
+        if isNull ok then
+            return Error(unbox json?Error)
+        else
+            return
+                Ok
+                    { Session = unbox ok?Session
+                      Account = decodeAccount ok?Account }
+    }
+
+let getAccount (session: string) : Async<AccountInfo option> =
+    async {
+        let! text = post "GetAccount" [| box session |]
+        let json = jsonParse text
+        return if isNull json then None else Some(decodeAccount json)
+    }
+
 let createGame (request: CreateGameRequest) : Async<Result<PlayerCredentials, string>> =
     async {
         let body =
@@ -153,6 +199,7 @@ let createGame (request: CreateGameRequest) : Async<Result<PlayerCredentials, st
                 "OpponentEmail" ==> optString request.OpponentEmail
                 "Message" ==> optString request.Message
                 "Language" ==> request.Language
+                "Session" ==> optString request.Session
             ]
 
         let! text = post "CreateGame" [| body |]
@@ -168,6 +215,7 @@ let joinGame (request: JoinGameRequest) : Async<Result<PlayerCredentials, string
                 "Email" ==> request.Email
                 "Message" ==> optString request.Message
                 "Language" ==> request.Language
+                "Session" ==> optString request.Session
             ]
 
         let! text = post "JoinGame" [| body |]
@@ -199,6 +247,7 @@ let submitMove (request: SubmitMoveRequest) : Async<ActionResponse> =
                 "ToSquare" ==> box request.ToSquare
                 "Promotion" ==> optPieceKind request.Promotion
                 "Message" ==> optString request.Message
+                "Session" ==> optString request.Session
             ]
 
         let! text = post "SubmitMove" [| body |]
@@ -213,6 +262,7 @@ let private action (name: string) (request: ActionRequest) : Async<ActionRespons
                 "PlayerId" ==> request.PlayerId
                 "Token" ==> request.Token
                 "Message" ==> optString request.Message
+                "Session" ==> optString request.Session
             ]
 
         let! text = post name [| body |]
@@ -244,14 +294,56 @@ let private onEventSourceMessage (source: obj) (handler: string -> unit) : unit 
 [<Emit("$0.close()")>]
 let private closeEventSource (source: obj) : unit = jsNative
 
-/// Subscribes to live updates for a game. The token is the one from the email
-/// link (or the stored credentials) and is validated by the server.
-let subscribeGame (gameId: string) (token: string) (onUpdate: unit -> unit) : System.IDisposable =
-    let source = createEventSource (sprintf "/api/game/%s/events?token=%s" gameId token)
-    onEventSourceMessage source (fun _ -> onUpdate ())
+/// Subscribes to live updates for a game, using the per-game token from the
+/// email link or the account session. The server validates whichever is given.
+let subscribeGame
+    (gameId: string)
+    (token: string option)
+    (session: string option)
+    (onUpdate: unit -> unit)
+    : System.IDisposable =
+    match token, session with
+    | None, None ->
+        { new System.IDisposable with
+            member _.Dispose() = () }
+    | _ ->
+        let query =
+            match token, session with
+            | Some value, _ -> sprintf "?token=%s" value
+            | None, Some value -> sprintf "?session=%s" value
+            | None, None -> ""
 
-    { new System.IDisposable with
-        member _.Dispose() = closeEventSource source }
+        let source = createEventSource (sprintf "/api/game/%s/events%s" gameId query)
+        onEventSourceMessage source (fun _ -> onUpdate ())
+
+        { new System.IDisposable with
+            member _.Dispose() = closeEventSource source }
+
+let private sessionKey = "w3chess.session"
+let private accountKey = "w3chess.account"
+
+let currentSession () : string option =
+    let value = localStorage.getItem sessionKey
+    if isNull value || value = "" then None else Some value
+
+let currentAccount () : AccountInfo option =
+    let value = localStorage.getItem accountKey
+
+    if isNull value || value = "" then
+        None
+    else
+        try
+            Some(decodeAccount (jsonParse value))
+        with _ ->
+            None
+
+let saveSession (session: AccountSession) =
+    localStorage.setItem (sessionKey, session.Session)
+    localStorage.setItem (accountKey, jsonStringify (encodeAccount session.Account))
+
+let clearSession () =
+    localStorage.removeItem sessionKey
+    localStorage.removeItem accountKey
 
 let private storageKey (gameId: string) = "w3chess.credentials." + gameId
 

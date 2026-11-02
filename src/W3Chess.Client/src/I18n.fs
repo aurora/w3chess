@@ -56,7 +56,10 @@ type T =
       ListInBrowser: string
       NoGames: string
       Open: string
-      Material: string }
+      Material: string
+      Login: string
+      Logout: string
+      CheckEmail: string }
 
 let private en: T =
     { AppName = "W3Chess"
@@ -110,7 +113,10 @@ let private en: T =
       ListInBrowser = "List in browser"
       NoGames = "No games found for this address."
       Open = "Open"
-      Material = "Material" }
+      Material = "Material"
+      Login = "Log in"
+      Logout = "Log out"
+      CheckEmail = "We sent you a login link by email." }
 
 let private de: T =
     { AppName = "W3Chess"
@@ -164,7 +170,10 @@ let private de: T =
       ListInBrowser = "Im Browser auflisten"
       NoGames = "Keine Partien zu dieser Adresse gefunden."
       Open = "Öffnen"
-      Material = "Material" }
+      Material = "Material"
+      Login = "Anmelden"
+      Logout = "Abmelden"
+      CheckEmail = "Wir haben dir einen Anmelde-Link per E-Mail geschickt." }
 
 let ofLang lang = if lang = De then de else en
 

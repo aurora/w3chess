@@ -61,6 +61,7 @@ let GamePage (props: GameProps) =
     let t = I18n.ofLang props.Lang
     let gameView, setGameView = React.useState (None: GameView option)
     let credentials, setCredentials = React.useState (None: PlayerCredentials option)
+    let session = Api.currentSession ()
     let selected, setSelected = React.useState (None: Square option)
     let staged, setStaged = React.useState (None: (Square * Square * PieceKind option) option)
     let promotionPicker, setPromotionPicker = React.useState (None: (Square * Square) option)
@@ -109,16 +110,17 @@ let GamePage (props: GameProps) =
         credentials
         |> Option.map (fun value -> value.Token)
         |> Option.orElse props.Token
-        |> Option.defaultValue ""
+
+    let subscriptionKey = sprintf "%s|%s" (defaultArg subscriptionToken "") (defaultArg session "")
 
     React.useEffect (
         (fun () ->
-            if subscriptionToken = "" then
-                { new System.IDisposable with
-                    member _.Dispose() = () }
-            else
-                Api.subscribeGame props.GameId subscriptionToken (fun () -> Async.StartImmediate (reload ()))),
-        [| box props.GameId; box subscriptionToken |]
+            Api.subscribeGame
+                props.GameId
+                subscriptionToken
+                session
+                (fun () -> Async.StartImmediate (reload ()))),
+        [| box props.GameId; box subscriptionKey |]
     )
 
     let position = gameView |> Option.map (fun view -> Board.ofFen view.Fen)
@@ -140,22 +142,25 @@ let GamePage (props: GameProps) =
 
     let submitMove (from: Square) (target: Square) (promotion: PieceKind option) =
         async {
-            match credentials with
-            | None -> setError (Some t.Error)
-            | Some credentials ->
+            match credentials, session with
+            | None, None -> setError (Some t.Error)
+            | _ ->
                 try
                     setBusy true
                     setError None
+                    let playerId = credentials |> Option.map (fun c -> c.PlayerId) |> Option.defaultValue ""
+                    let token = credentials |> Option.map (fun c -> c.Token) |> Option.defaultValue ""
 
                     let! response =
                         Api.submitMove
                             { GameId = props.GameId
-                              PlayerId = credentials.PlayerId
-                              Token = credentials.Token
+                              PlayerId = playerId
+                              Token = token
                               FromSquare = from
                               ToSquare = target
                               Promotion = promotion
-                              Message = (if message = "" then None else Some message) }
+                              Message = (if message = "" then None else Some message)
+                              Session = session }
 
                     setBusy false
 
@@ -218,13 +223,20 @@ let GamePage (props: GameProps) =
 
     let action (call: PlayerCredentials -> Async<ActionResponse>) =
         async {
-            match credentials with
-            | None -> setError (Some t.Error)
-            | Some credentials ->
+            match credentials, session with
+            | None, None -> setError (Some t.Error)
+            | _ ->
                 try
                     setBusy true
                     setError None
-                    let! response = call credentials
+                    let creds =
+                        credentials
+                        |> Option.defaultValue
+                            { GameId = props.GameId
+                              PlayerId = ""
+                              Token = ""
+                              Color = White }
+                    let! response = call creds
                     setBusy false
 
                     if response.Ok then
@@ -546,7 +558,7 @@ let GamePage (props: GameProps) =
                                                 prop.type'.button
                                                 prop.className
                                                     "h-12 rounded bg-primary text-on-primary font-bold disabled:opacity-50"
-                                                prop.disabled (busy || staged.IsNone || credentials.IsNone)
+                                                prop.disabled (busy || staged.IsNone || (credentials.IsNone && session.IsNone))
                                                 prop.onClick (fun _ ->
                                                     match staged with
                                                     | Some(from, target, promotion) -> submitMove from target promotion
@@ -564,27 +576,27 @@ let GamePage (props: GameProps) =
                                             Html.button [
                                                 prop.type'.button
                                                 prop.className "h-11 rounded border border-outline-variant hover:border-primary text-sm"
-                                                prop.disabled (busy || credentials.IsNone)
+                                                prop.disabled (busy || (credentials.IsNone && session.IsNone))
                                                 prop.onClick (fun _ ->
                                                     action (fun credentials ->
                                                         Api.offerDraw
                                                             { GameId = props.GameId
                                                               PlayerId = credentials.PlayerId
                                                               Token = credentials.Token
-                                                              Message = None }))
+                                                              Message = None; Session = session }))
                                                 prop.text t.OfferDraw
                                             ]
                                             Html.button [
                                                 prop.type'.button
                                                 prop.className "h-11 rounded border border-outline-variant hover:border-error text-sm text-error"
-                                                prop.disabled (busy || credentials.IsNone)
+                                                prop.disabled (busy || (credentials.IsNone && session.IsNone))
                                                 prop.onClick (fun _ ->
                                                     action (fun credentials ->
                                                         Api.resign
                                                             { GameId = props.GameId
                                                               PlayerId = credentials.PlayerId
                                                               Token = credentials.Token
-                                                              Message = None }))
+                                                              Message = None; Session = session }))
                                                 prop.text t.Resign
                                             ]
                                         ]
@@ -602,14 +614,14 @@ let GamePage (props: GameProps) =
                                                     prop.type'.button
                                                     prop.className
                                                         "h-11 rounded bg-secondary text-on-secondary font-semibold disabled:opacity-50"
-                                                    prop.disabled (busy || credentials.IsNone)
+                                                    prop.disabled (busy || (credentials.IsNone && session.IsNone))
                                                     prop.onClick (fun _ ->
                                                         action (fun credentials ->
                                                             Api.acceptDraw
                                                                 { GameId = props.GameId
                                                                   PlayerId = credentials.PlayerId
                                                                   Token = credentials.Token
-                                                                  Message = None }))
+                                                                  Message = None; Session = session }))
                                                     prop.text t.AcceptDraw
                                                 ]
                                             ]

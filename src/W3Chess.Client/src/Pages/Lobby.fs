@@ -39,8 +39,9 @@ let Lobby (props: LobbyProps) =
         match game.Result with
         | Some result -> baseText + " · " + result
         | None -> baseText
-    let nickname, setNickname = React.useState ("")
-    let email, setEmail = React.useState ("")
+    let account = Api.currentAccount ()
+    let nickname, setNickname = React.useState (account |> Option.map (fun a -> a.Nickname) |> Option.defaultValue "")
+    let email, setEmail = React.useState (account |> Option.map (fun a -> a.Email) |> Option.defaultValue "")
     let color, setColor = React.useState (ColorChoice.RandomColor)
     let opponentNick, setOpponentNick = React.useState ("")
     let opponentEmail, setOpponentEmail = React.useState ("")
@@ -79,7 +80,8 @@ let Lobby (props: LobbyProps) =
                           OpponentNickname = optional opponentNick
                           OpponentEmail = optional opponentEmail
                           Message = optional message
-                          Language = I18n.code props.Lang }
+                          Language = I18n.code props.Lang
+                          Session = Api.currentSession () }
 
                 setBusy false
 
@@ -106,7 +108,8 @@ let Lobby (props: LobbyProps) =
                           Nickname = nickname
                           Email = email
                           Message = None
-                          Language = I18n.code props.Lang }
+                          Language = I18n.code props.Lang
+                          Session = Api.currentSession () }
 
                 setBusy false
 
