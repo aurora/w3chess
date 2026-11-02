@@ -4,6 +4,7 @@ open System
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Hosting
 open Giraffe
 open Fable.Remoting.Server
 open Fable.Remoting.Giraffe
@@ -61,6 +62,9 @@ let main args =
         builder.Services.AddCors() |> ignore
 
         let app = builder.Build()
+
+        if app.Environment.IsDevelopment() then
+            app.UseDeveloperExceptionPage() |> ignore
 
         app.UseCors(fun policy -> policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod() |> ignore)
         |> ignore
