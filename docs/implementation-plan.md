@@ -70,7 +70,7 @@ docs/adr/                # Architecture Decision Records
 - [x] Board component (click selection, legal-move hints, last-move and flip)
 - [x] Lobby: new game, resume, digest request, open tables
 - [x] Game view: match strip, board, move console, PGN history, actions
-- [ ] Archive
+- [x] Archive: list the games for an email in the browser (no email wait)
 
 ### Cross-cutting
 - [x] English and German for all UI strings and email templates in the same
@@ -103,3 +103,7 @@ docs/adr/                # Architecture Decision Records
   `fetch` + `JSON.parse` decoding (ADR 0007); collections cross the wire as
   arrays. Verified end-to-end against the running server (list, create, get,
   validate, submit move). Still open: archive page; manual browser/MailDev pass.
+- 2026-11-02: Added drag and drop (click-to-move kept) and the archive: a server
+  endpoint lists a player's games by email and the lobby shows them in the
+  browser. Email flow verified end to end against MailDev (invitation and turn
+  mails in German, link token validates, move notifies both players).
