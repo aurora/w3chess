@@ -83,6 +83,12 @@ type ActionResponse = { Ok: bool; Error: string option }
 
 type DigestRequest = { Email: string; Language: string }
 
+/// Shared HTTP route convention for the remoting API. Both the server and the
+/// client build routes through this function so they can never drift apart.
+module ApiRoutes =
+    let prefix = "/api"
+    let build typeName methodName = sprintf "%s/%s/%s" prefix typeName methodName
+
 /// The typed API shared by the server and the Fable client (Fable.Remoting).
 type IW3ChessApi =
     { CreateGame: CreateGameRequest -> Async<Result<PlayerCredentials, string>>

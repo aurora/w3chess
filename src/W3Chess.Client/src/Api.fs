@@ -5,10 +5,12 @@ open Browser.WebStorage
 open W3Chess.Domain
 open W3Chess.Contracts
 
-/// Typed Fable.Remoting client. Requests are relative, so Vite proxies `/api`
-/// to the Kestrel server during development.
+/// Typed Fable.Remoting client. The shared `ApiRoutes.build` keeps the client
+/// and server routes aligned; Vite proxies `/api` to Kestrel.
 let api: IW3ChessApi =
-    Remoting.createApi () |> Remoting.buildProxy<IW3ChessApi>
+    Remoting.createApi ()
+    |> Remoting.withRouteBuilder ApiRoutes.build
+    |> Remoting.buildProxy<IW3ChessApi>
 
 let private storageKey (gameId: string) = "w3chess.credentials." + gameId
 

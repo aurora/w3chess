@@ -8,6 +8,7 @@ open Giraffe
 open Fable.Remoting.Server
 open Fable.Remoting.Giraffe
 open W3Chess.Server
+open W3Chess.Contracts
 open W3Chess.Server.Api
 open W3Chess.Server.Services
 open W3Chess.Server.Storage
@@ -49,7 +50,7 @@ let main args =
 
         let remoting =
             Remoting.createApi ()
-            |> Remoting.withRouteBuilder (fun typeName methodName -> sprintf "/api/%s/%s" typeName methodName)
+            |> Remoting.withRouteBuilder ApiRoutes.build
             |> Remoting.fromValue api
             |> Remoting.buildHttpHandler
 
