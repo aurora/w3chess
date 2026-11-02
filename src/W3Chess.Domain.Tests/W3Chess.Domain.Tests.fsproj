@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="PerftTests.fs" />
     <Compile Include="RulesTests.fs" />
+    <Compile Include="LegacyImportTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
