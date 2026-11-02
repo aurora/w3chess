@@ -44,6 +44,22 @@ type MoveRow =
       Message: string
       CreatedAt: string }
 
+[<CLIMutable>]
+type AccountRow =
+    { Id: string
+      Email: string
+      Nickname: string
+      Language: string
+      CreatedAt: string }
+
+[<CLIMutable>]
+type LoginTokenRow =
+    { TokenHash: string
+      AccountId: string
+      CreatedAt: string
+      ExpiresAt: string
+      UsedAt: string }
+
 module Schema =
     let private statements =
         [ """CREATE TABLE IF NOT EXISTS players (
@@ -86,6 +102,21 @@ module Schema =
                 message TEXT NOT NULL,
                 created_at TEXT NOT NULL,
                 PRIMARY KEY (game_id, ply)
+             )"""
+          """CREATE TABLE IF NOT EXISTS accounts (
+                id TEXT PRIMARY KEY,
+                email TEXT NOT NULL,
+                nickname TEXT NOT NULL,
+                language TEXT NOT NULL,
+                created_at TEXT NOT NULL
+             )"""
+          """CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_email ON accounts (email COLLATE NOCASE)"""
+          """CREATE TABLE IF NOT EXISTS login_tokens (
+                token_hash TEXT PRIMARY KEY,
+                account_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                used_at TEXT NOT NULL
              )""" ]
 
     /// Creates all tables and indexes if they do not exist yet.

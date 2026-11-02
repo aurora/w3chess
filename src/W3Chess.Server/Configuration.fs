@@ -18,6 +18,7 @@ type AppSettings =
       PublicBaseUrl: string
       TokenSecret: string
       GameRetentionDays: int
+      RequireAccount: bool
       Smtp: SmtpSettings }
 
 module AppSettings =
@@ -45,6 +46,7 @@ module AppSettings =
           PublicBaseUrl = getString "PublicBaseUrl" "http://localhost:5173"
           TokenSecret = getString "Token:Secret" "dev-only-change-me"
           GameRetentionDays = getInt "GameRetentionDays" 0
+          RequireAccount = getBool "Auth:RequireAccount" false
           Smtp =
             { Host = getString "Smtp:Host" "localhost"
               Port = getInt "Smtp:Port" 1025

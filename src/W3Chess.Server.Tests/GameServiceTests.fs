@@ -21,6 +21,7 @@ let private newSettings () =
       PublicBaseUrl = "http://localhost"
       TokenSecret = "test-secret"
       GameRetentionDays = 0
+      RequireAccount = false
       Smtp =
         { Host = "localhost"
           Port = 1025
@@ -48,7 +49,7 @@ let private createOpenRequest =
       OpponentNickname = None
       OpponentEmail = None
       Message = None
-      Language = "en" }
+      Language = "en"; Session = None }
 
 let private unwrap = function
     | Ok value -> value
@@ -79,7 +80,7 @@ let ``create an open game, join, and exchange moves`` () =
                       Nickname = "Bob"
                       Email = "bob@example.com"
                       Message = None
-                      Language = "en" }
+                      Language = "en"; Session = None }
                 |> Async.RunSynchronously
                 |> unwrap
 
@@ -97,7 +98,7 @@ let ``create an open game, join, and exchange moves`` () =
                       FromSquare = Square.create 4 1
                       ToSquare = Square.create 4 3
                       Promotion = None
-                      Message = None }
+                      Message = None; Session = None }
 
             Assert.True(whiteMove.Ok, sprintf "%A" whiteMove.Error)
 
@@ -109,7 +110,7 @@ let ``create an open game, join, and exchange moves`` () =
                       FromSquare = Square.create 4 6
                       ToSquare = Square.create 4 4
                       Promotion = None
-                      Message = None }
+                      Message = None; Session = None }
 
             Assert.True(blackMove.Ok, sprintf "%A" blackMove.Error)
 
@@ -121,7 +122,7 @@ let ``create an open game, join, and exchange moves`` () =
                       FromSquare = Square.create 3 1
                       ToSquare = Square.create 3 3
                       Promotion = None
-                      Message = None }
+                      Message = None; Session = None }
 
             Assert.True(whiteAgain.Ok)
 
@@ -133,7 +134,7 @@ let ``create an open game, join, and exchange moves`` () =
                       FromSquare = Square.create 4 4
                       ToSquare = Square.create 4 7
                       Promotion = None
-                      Message = None }
+                      Message = None; Session = None }
 
             Assert.False(illegal.Ok)
 
@@ -196,7 +197,7 @@ let ``resigning finishes the game in favour of the opponent`` () =
                     { GameId = alice.GameId
                       PlayerId = alice.PlayerId
                       Token = alice.Token
-                      Message = None }
+                      Message = None; Session = None }
 
             Assert.True(response.Ok)
             let! view = service.GetGame alice.GameId

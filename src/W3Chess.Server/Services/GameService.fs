@@ -88,10 +88,20 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
     let otherPlayer (players: GamePlayerRow list) (playerId: string) =
         players |> List.tryFind (fun gp -> gp.PlayerId <> playerId)
 
+    let accountOf (connection: SqliteConnection) (session: string option) =
+        session
+        |> Option.bind (SessionService.validate settings.TokenSecret)
+        |> Option.bind (fun accountId -> AccountRepository.findById connection accountId)
+
     member _.CreateGame(request: CreateGameRequest) : Async<Result<PlayerCredentials, string>> =
         async {
+            let accountOk =
+                not settings.RequireAccount
+                || (request.Session |> Option.bind (SessionService.validate settings.TokenSecret)).IsSome
+
             match validateInput request.Nickname request.Email with
             | Error message -> return Error message
+            | Ok() when not accountOk -> return Error "An account is required to create games"
             | Ok() ->
                 use connection = connect ()
                 let now = Db.nowIso ()
@@ -211,8 +221,13 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
 
     member _.JoinGame(request: JoinGameRequest) : Async<Result<PlayerCredentials, string>> =
         async {
+            let accountOk =
+                not settings.RequireAccount
+                || (request.Session |> Option.bind (SessionService.validate settings.TokenSecret)).IsSome
+
             match validateInput request.Nickname request.Email with
             | Error message -> return Error message
+            | Ok() when not accountOk -> return Error "An account is required to join games"
             | Ok() ->
                 use connection = connect ()
 
@@ -369,29 +384,40 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                 |> Array.ofList
         }
 
-    /// Validates credentials and returns the game, game player and open connection.
-    member private _.Authorise(gameId: string, playerId: string, token: string) =
+    /// Validates credentials (per-game token or account session) and returns the
+    /// game, the acting game player and an open connection.
+    member private _.Authorise(gameId: string, playerId: string, token: string, session: string option) =
         let connection = connect ()
 
-        match TokenService.validate settings.TokenSecret gameId token with
-        | Some validPlayer when validPlayer = playerId ->
+        let withPlayer gamePlayer =
             match GameRepository.findById connection gameId with
             | None ->
                 connection.Dispose()
                 Error "Game not found"
-            | Some game ->
-                match GamePlayerRepository.findByGameAndPlayer connection gameId playerId with
+            | Some game -> Ok(connection, game, gamePlayer)
+
+        match TokenService.validate settings.TokenSecret gameId token with
+        | Some validPlayer when validPlayer = playerId ->
+            match GamePlayerRepository.findByGameAndPlayer connection gameId playerId with
+            | None ->
+                connection.Dispose()
+                Error "You are not a player in this game"
+            | Some gamePlayer -> withPlayer gamePlayer
+        | _ ->
+            match accountOf connection session with
+            | Some account ->
+                match GamePlayerRepository.findByGameAndEmail connection gameId account.Email with
+                | Some gamePlayer -> withPlayer gamePlayer
                 | None ->
                     connection.Dispose()
                     Error "You are not a player in this game"
-                | Some gamePlayer -> Ok(connection, game, gamePlayer)
-        | _ ->
-            connection.Dispose()
-            Error "Invalid access token"
+            | None ->
+                connection.Dispose()
+                Error "Invalid access token"
 
     member this.SubmitMove(request: SubmitMoveRequest) : Async<ActionResponse> =
         async {
-            match this.Authorise(request.GameId, request.PlayerId, request.Token) with
+            match this.Authorise(request.GameId, request.PlayerId, request.Token, request.Session) with
             | Error message -> return { Ok = false; Error = Some message }
             | Ok(connection, game, gamePlayer) ->
                 use connection = connection
@@ -512,7 +538,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
 
     member this.Resign(request: ActionRequest) : Async<ActionResponse> =
         async {
-            match this.Authorise(request.GameId, request.PlayerId, request.Token) with
+            match this.Authorise(request.GameId, request.PlayerId, request.Token, request.Session) with
             | Error message -> return { Ok = false; Error = Some message }
             | Ok(connection, game, gamePlayer) ->
                 use connection = connection
@@ -557,7 +583,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
 
     member this.OfferDraw(request: ActionRequest) : Async<ActionResponse> =
         async {
-            match this.Authorise(request.GameId, request.PlayerId, request.Token) with
+            match this.Authorise(request.GameId, request.PlayerId, request.Token, request.Session) with
             | Error message -> return { Ok = false; Error = Some message }
             | Ok(connection, game, _) ->
                 use connection = connection
@@ -579,7 +605,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
 
     member this.AcceptDraw(request: ActionRequest) : Async<ActionResponse> =
         async {
-            match this.Authorise(request.GameId, request.PlayerId, request.Token) with
+            match this.Authorise(request.GameId, request.PlayerId, request.Token, request.Session) with
             | Error message -> return { Ok = false; Error = Some message }
             | Ok(connection, game, _) ->
                 use connection = connection

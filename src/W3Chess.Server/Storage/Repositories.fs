@@ -146,6 +146,15 @@ module GamePlayerRepository =
         )
         |> Seq.tryHead
 
+    let findByGameAndEmail (connection: SqliteConnection) (gameId: string) (email: string) : GamePlayerRow option =
+        connection.Query<GamePlayerRow>(
+            sprintf
+                "SELECT %s FROM game_players gp JOIN players p ON p.id = gp.player_id WHERE gp.game_id = @gameId AND lower(p.email) = lower(@email)"
+                columns,
+            {| gameId = gameId; email = email |}
+        )
+        |> Seq.tryHead
+
 module MoveRepository =
     let insert (connection: SqliteConnection) (move: MoveRow) =
         connection.Execute(
@@ -163,3 +172,50 @@ module MoveRepository =
             {| gameId = gameId |}
         )
         |> Seq.toList
+
+module AccountRepository =
+    let insert (connection: SqliteConnection) (account: AccountRow) =
+        connection.Execute(
+            """INSERT INTO accounts (id, email, nickname, language, created_at)
+               VALUES (@Id, @Email, @Nickname, @Language, @CreatedAt)""",
+            account
+        )
+        |> ignore
+
+    let private columns = "id AS Id, email AS Email, nickname AS Nickname, language AS Language, created_at AS CreatedAt"
+
+    let findById (connection: SqliteConnection) (id: string) : AccountRow option =
+        connection.Query<AccountRow>(sprintf "SELECT %s FROM accounts WHERE id = @id" columns, {| id = id |})
+        |> Seq.tryHead
+
+    let findByEmail (connection: SqliteConnection) (email: string) : AccountRow option =
+        connection.Query<AccountRow>(
+            sprintf "SELECT %s FROM accounts WHERE email = @email COLLATE NOCASE" columns,
+            {| email = email |}
+        )
+        |> Seq.tryHead
+
+module LoginTokenRepository =
+    let insert (connection: SqliteConnection) (row: LoginTokenRow) =
+        connection.Execute(
+            """INSERT INTO login_tokens (token_hash, account_id, created_at, expires_at, used_at)
+               VALUES (@TokenHash, @AccountId, @CreatedAt, @ExpiresAt, @UsedAt)""",
+            row
+        )
+        |> ignore
+
+    let findUnused (connection: SqliteConnection) (tokenHash: string) : LoginTokenRow option =
+        connection.Query<LoginTokenRow>(
+            """SELECT token_hash AS TokenHash, account_id AS AccountId, created_at AS CreatedAt,
+                      expires_at AS ExpiresAt, used_at AS UsedAt
+               FROM login_tokens WHERE token_hash = @tokenHash AND used_at = ''""",
+            {| tokenHash = tokenHash |}
+        )
+        |> Seq.tryHead
+
+    let markUsed (connection: SqliteConnection) (tokenHash: string) (usedAt: string) =
+        connection.Execute(
+            "UPDATE login_tokens SET used_at = @usedAt WHERE token_hash = @tokenHash",
+            {| tokenHash = tokenHash; usedAt = usedAt |}
+        )
+        |> ignore

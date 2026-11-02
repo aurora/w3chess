@@ -10,10 +10,12 @@
     <Compile Include="Storage/Models.fs" />
     <Compile Include="Storage/Repositories.fs" />
     <Compile Include="Services/TokenService.fs" />
+    <Compile Include="Services/SessionService.fs" />
     <Compile Include="Services/EmailTemplates.fs" />
     <Compile Include="Services/EmailService.fs" />
     <Compile Include="Services/Notifier.fs" />
     <Compile Include="Services/GameEvents.fs" />
+    <Compile Include="Services/AuthService.fs" />
     <Compile Include="Services/GameService.fs" />
     <Compile Include="Services/ImportService.fs" />
     <Compile Include="Api/ServerApi.fs" />

@@ -16,6 +16,23 @@ module EmailTemplates =
     let link (baseUrl: string) (gameId: string) (token: string) =
         sprintf "%s/#/game/%s?token=%s" (baseUrl.TrimEnd('/')) gameId token
 
+    let login lang (url: string) =
+        let subject = t lang "Dein Anmelde-Link" "Your login link"
+
+        let body =
+            String.concat
+                "\n"
+                [ t lang "Hallo," "Hello,"
+                  ""
+                  t
+                      lang
+                      "Klicke auf den Link, um dich anzumelden. Er ist 30 Minuten gültig und kann nur einmal verwendet werden."
+                      "Click the link to log in. It is valid for 30 minutes and can be used once."
+                  ""
+                  url ]
+
+        subject, body
+
     /// Renders the legacy 64-character board (rank 8 first) as ASCII art.
     let renderBoard (legacyBoard: string) (flip: bool) =
         let cellAt file rank = legacyBoard.[(7 - rank) * 8 + file]

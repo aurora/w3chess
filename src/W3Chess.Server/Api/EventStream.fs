@@ -5,26 +5,46 @@ open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Giraffe
+open W3Chess.Server
 open W3Chess.Server.Services
+open W3Chess.Server.Storage
 
-/// Server-Sent Events endpoint. A player subscribes to a game with the token
-/// from their email link; the server then streams "updated" pokes whenever the
-/// game changes.
+/// Server-Sent Events endpoint. A player subscribes to a game with either the
+/// per-game token from their email link or their account session; the server then
+/// streams "updated" pokes whenever the game changes.
 module EventStream =
-    let handler (gameEvents: GameEvents) (tokenSecret: string) (gameId: string) : HttpHandler =
+    let private isSessionPlayer (settings: AppSettings) (gameId: string) (session: string) =
+        match SessionService.validate settings.TokenSecret session with
+        | None -> false
+        | Some accountId ->
+            use connection = Db.connect settings.DatabasePath
+
+            match AccountRepository.findById connection accountId with
+            | None -> false
+            | Some account ->
+                GamePlayerRepository.findByGameAndEmail connection gameId account.Email
+                |> Option.isSome
+
+    let handler (gameEvents: GameEvents) (settings: AppSettings) (gameId: string) : HttpHandler =
         fun _next (ctx: HttpContext) ->
             task {
-                let token =
-                    match ctx.TryGetQueryStringValue "token" with
+                let query name =
+                    match ctx.TryGetQueryStringValue name with
                     | Some value -> value
                     | None -> ""
 
-                match TokenService.validate tokenSecret gameId token with
-                | None ->
+                let token = query "token"
+                let session = query "session"
+
+                let isPlayer =
+                    (TokenService.validate settings.TokenSecret gameId token |> Option.isSome)
+                    || (session <> "" && isSessionPlayer settings gameId session)
+
+                if not isPlayer then
                     ctx.Response.StatusCode <- 401
                     do! ctx.Response.WriteAsync("Invalid access token")
                     return Some ctx
-                | Some _ ->
+                else
                     let cancellationToken = ctx.RequestAborted
 
                     ctx.Response.StatusCode <- 200

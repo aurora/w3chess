@@ -47,8 +47,9 @@ let main args =
 
         let notifier = Notifier.email settings.Smtp
         let gameEvents = GameEvents()
+        let authService = AuthService(settings, notifier)
         let gameService = GameService(settings, notifier, gameEvents)
-        let api = ServerApi.create gameService
+        let api = ServerApi.create gameService authService
 
         let remoting =
             Remoting.createApi ()
@@ -60,7 +61,7 @@ let main args =
             choose [
                 route "/health" >=> text "ok"
                 routef "/api/game/%s/events" (fun gameId ->
-                    EventStream.handler gameEvents settings.TokenSecret gameId)
+                    EventStream.handler gameEvents settings gameId)
                 remoting
             ]
 
