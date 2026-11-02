@@ -78,8 +78,9 @@ docs/adr/                # Architecture Decision Records
 
 ## Later (not in M1)
 
-- Real-time online play via SignalR when both players are online (emails still
-  sent); the `Notifier` abstraction is the seam.
+- Real-time updates are implemented via token-authenticated SSE (ADR 0008): a
+  move appears live for an online opponent, while emails are still sent.
+  SignalR remains an option if presence or groups are needed later.
 - Optional AI opponent (neither planned nor excluded).
 - Additional draw rules (threefold repetition), clock/ICCF time controls, ELO,
   accounts, admin mode.
@@ -109,3 +110,6 @@ docs/adr/                # Architecture Decision Records
   mails in German, link token validates, move notifies both players).
 - 2026-11-02: Board polish: rank/file coordinates, captured pieces with material
   advantage, a PGN move table, and a promotion overlay on the board.
+- 2026-11-02: Real-time updates: token-authenticated SSE per game (ADR 0008)
+  with an in-memory pub/sub; the game view reloads on `updated`. Verified the
+  endpoint with curl (401 for a bad token, `updated` after a move).
