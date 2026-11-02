@@ -107,3 +107,5 @@ docs/adr/                # Architecture Decision Records
   endpoint lists a player's games by email and the lobby shows them in the
   browser. Email flow verified end to end against MailDev (invitation and turn
   mails in German, link token validates, move notifies both players).
+- 2026-11-02: Board polish: rank/file coordinates, captured pieces with material
+  advantage, a PGN move table, and a promotion overlay on the board.

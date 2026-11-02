@@ -14,7 +14,7 @@ type Props =
       OnDragStart: Square -> unit
       OnDrop: Square -> Square -> unit }
 
-let private glyph kind =
+let glyph kind =
     match kind with
     | Pawn -> "\u265F"
     | Knight -> "\u265E"
@@ -38,6 +38,8 @@ let view (props: Props) =
                     let isDark = (file + rank) % 2 = 0
                     let isSelected = props.Selected = Some square
                     let isTarget = List.contains square props.Targets
+                    let isLeftEdge = file = (if props.Orientation = White then 0 else 7)
+                    let isBottomEdge = rank = (if props.Orientation = White then 0 else 7)
 
                     let isLast =
                         match props.LastMove with
@@ -82,6 +84,22 @@ let view (props: Props) =
                                             prop.text (glyph value.Kind)
                                         ]
                                 | None -> ()
+
+                                if isLeftEdge then
+                                    yield
+                                        Html.span [
+                                            prop.className
+                                                "pointer-events-none absolute top-0.5 left-1 z-20 font-mono text-[1.5cqw] text-primary/70"
+                                            prop.text (string (rank + 1))
+                                        ]
+
+                                if isBottomEdge then
+                                    yield
+                                        Html.span [
+                                            prop.className
+                                                "pointer-events-none absolute bottom-0.5 right-1 z-20 font-mono text-[1.5cqw] text-primary/70"
+                                            prop.text (string (char (int 'a' + file)))
+                                        ]
 
                                 if isSelected then
                                     yield Html.div [ prop.className "absolute inset-0 border-2 border-primary" ]

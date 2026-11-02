@@ -14,6 +14,48 @@ type GameProps =
       Lang: Lang
       OnBack: unit -> unit }
 
+let private pieceValue =
+    function
+    | Pawn -> 1
+    | Knight -> 3
+    | Bishop -> 3
+    | Rook -> 5
+    | Queen -> 9
+    | King -> 0
+
+let private initialCount =
+    function
+    | Pawn -> 8
+    | Knight
+    | Bishop
+    | Rook -> 2
+    | Queen
+    | King -> 1
+
+/// Missing pieces per colour: (captured by White = black pieces gone,
+/// captured by Black = white pieces gone). Promotions are ignored.
+let private capturedPieces (position: Position) =
+    let present color =
+        position.Board
+        |> Array.choose id
+        |> Array.filter (fun piece -> piece.Color = color)
+        |> Array.countBy (fun piece -> piece.Kind)
+        |> Map.ofArray
+
+    let missing color =
+        [ Pawn; Knight; Bishop; Rook; Queen; King ]
+        |> List.collect (fun kind ->
+            let count = Map.tryFind kind (present color) |> Option.defaultValue 0
+            List.replicate (max 0 (initialCount kind - count)) kind)
+
+    missing Color.Black, missing Color.White
+
+/// Positive when White is ahead in material.
+let private materialScore (position: Position) =
+    position.Board
+    |> Array.choose id
+    |> Array.sumBy (fun piece -> if piece.Color = White then pieceValue piece.Kind else -pieceValue piece.Kind)
+
 [<ReactComponent>]
 let GamePage (props: GameProps) =
     let t = I18n.ofLang props.Lang
@@ -193,6 +235,54 @@ let GamePage (props: GameProps) =
                 | Some credentials -> if view.SideToMove = credentials.Color then t.YourTurn else t.OpponentTurn
                 | None -> if view.SideToMove = White then t.White else t.Black
 
+    let glyphRow (color: Color) (kinds: PieceKind list) =
+        kinds
+        |> List.map (fun kind ->
+            Html.span [
+                prop.className ((if color = White then "piece-white" else "piece-black") + " text-base leading-none")
+                prop.text (string (Board.glyph kind))
+            ])
+
+    let materialBar (position: Position) =
+        let capturedByWhite, capturedByBlack = capturedPieces position
+        let score = materialScore position
+
+        let scoreText =
+            if score > 0 then sprintf "+%d" score
+            elif score < 0 then string score
+            else "0"
+
+        Html.div [
+            prop.className
+                "flex items-center justify-between gap-4 rounded bg-surface-container px-3 py-2 text-xs text-on-surface-variant"
+            prop.children [
+                Html.div [
+                    prop.className "flex items-center gap-1"
+                    prop.children [
+                        Html.span [ prop.className "uppercase tracking-wide"; prop.text (t.White + ":") ]
+                        Html.span [
+                            prop.className "flex flex-wrap items-center gap-0.5"
+                            prop.children (glyphRow Black capturedByWhite)
+                        ]
+                    ]
+                ]
+                Html.span [
+                    prop.className "font-mono font-bold text-primary"
+                    prop.text (sprintf "%s %s" t.Material scoreText)
+                ]
+                Html.div [
+                    prop.className "flex items-center gap-1"
+                    prop.children [
+                        Html.span [ prop.className "uppercase tracking-wide"; prop.text (t.Black + ":") ]
+                        Html.span [
+                            prop.className "flex flex-wrap items-center gap-0.5"
+                            prop.children (glyphRow White capturedByBlack)
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
     let playerLabel (player: PlayerView option) fallback =
         match player with
         | Some value -> sprintf "%s (%s)" value.Nickname (if value.Color = White then t.White else t.Black)
@@ -202,23 +292,52 @@ let GamePage (props: GameProps) =
         if Array.isEmpty view.Moves then
             Html.p [ prop.className "text-sm text-on-surface-variant"; prop.text t.NoMoves ]
         else
+            let lastPly = view.Moves.[view.Moves.Length - 1].Ply
+
+            let cell (move: MoveView option) =
+                match move with
+                | Some value ->
+                    Html.span [
+                        prop.className (
+                            "px-1.5 py-0.5 rounded "
+                            + (if value.Ply = lastPly then
+                                   "bg-primary/20 text-primary font-bold"
+                               else
+                                   "text-on-surface")
+                        )
+                        prop.text value.San
+                    ]
+                | None -> Html.span [ prop.className "text-on-surface-variant"; prop.text "–" ]
+
             Html.div [
-                prop.className "grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-sm"
+                prop.className "flex flex-col font-mono text-sm max-h-64 overflow-y-auto"
                 prop.children [
-                    for move in view.Moves do
-                        let prefix = if move.Ply % 2 = 1 then sprintf "%d." ((move.Ply + 1) / 2) else sprintf "%d…" ((move.Ply + 1) / 2)
+                    yield
+                        Html.div [
+                            prop.className
+                                "grid grid-cols-[2.5rem_1fr_1fr] gap-2 px-2 pb-1 text-[10px] uppercase tracking-wide text-on-surface-variant border-b border-outline-variant"
+                            prop.children [
+                                Html.span [ prop.text "#" ]
+                                Html.span [ prop.text t.White ]
+                                Html.span [ prop.text t.Black ]
+                            ]
+                        ]
+
+                    for row in 0 .. (view.Moves.Length - 1) / 2 do
+                        let white = Array.tryItem (row * 2) view.Moves
+                        let black = Array.tryItem (row * 2 + 1) view.Moves
 
                         yield
                             Html.div [
-                                prop.key move.Ply
-                                prop.className
-                                    "rounded bg-surface-container px-3 py-2 flex flex-col border border-outline-variant"
+                                prop.key row
+                                prop.className "grid grid-cols-[2.5rem_1fr_1fr] gap-2 px-2 py-0.5"
                                 prop.children [
                                     Html.span [
-                                        prop.className "text-[10px] uppercase text-on-surface-variant"
-                                        prop.text prefix
+                                        prop.className "text-on-surface-variant"
+                                        prop.text (sprintf "%d." (row + 1))
                                     ]
-                                    Html.span [ prop.className "font-bold text-on-surface"; prop.text move.San ]
+                                    cell white
+                                    cell black
                                 ]
                             ]
                 ]
@@ -275,16 +394,62 @@ let GamePage (props: GameProps) =
                             prop.children [
                                 match position with
                                 | Some position ->
+                                    yield materialBar position
                                     yield
-                                        Board.view
-                                            { Position = position
-                                              Orientation = orientation
-                                              Selected = selected
-                                              Targets = (match selected with Some from -> targets from | None -> [])
-                                              LastMove = lastMove
-                                              OnClick = onClick
-                                              OnDragStart = onDragStart
-                                              OnDrop = onDrop }
+                                        Html.div [
+                                            prop.className "relative"
+                                            prop.children [
+                                                yield
+                                                    Board.view
+                                                        { Position = position
+                                                          Orientation = orientation
+                                                          Selected = selected
+                                                          Targets = (match selected with Some from -> targets from | None -> [])
+                                                          LastMove = lastMove
+                                                          OnClick = onClick
+                                                          OnDragStart = onDragStart
+                                                          OnDrop = onDrop }
+
+                                                match promotionPicker with
+                                                | Some(from, target) ->
+                                                    yield
+                                                        Html.div [
+                                                            prop.className
+                                                                "absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                                                            prop.children [
+                                                                Html.div [
+                                                                    prop.className
+                                                                        "rounded-lg border border-outline-variant bg-surface-container-low p-3 flex flex-col gap-2 items-center shadow-xl"
+                                                                    prop.children [
+                                                                        Html.span [
+                                                                            prop.className
+                                                                                "text-xs uppercase tracking-wide text-on-surface-variant"
+                                                                            prop.text t.Promotion
+                                                                        ]
+                                                                        Html.div [
+                                                                            prop.className "flex gap-2"
+                                                                            prop.children [
+                                                                                for kind in [ Queen; Rook; Bishop; Knight ] do
+                                                                                    yield
+                                                                                        Html.button [
+                                                                                            prop.key (string kind)
+                                                                                            prop.type'.button
+                                                                                            prop.className
+                                                                                                "w-12 h-12 rounded border border-outline-variant text-3xl text-on-surface hover:border-primary"
+                                                                                            prop.onClick (fun _ ->
+                                                                                                setStaged (Some(from, target, Some kind))
+                                                                                                setPromotionPicker None)
+                                                                                            prop.text (string (Board.glyph kind))
+                                                                                        ]
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            ]
+                                                        ]
+                                                | None -> ()
+                                            ]
+                                        ]
                                 | None -> yield Html.div [ prop.className "aspect-square bg-surface-container-low rounded-lg" ]
                                 yield
                                     Html.div [
@@ -326,48 +491,21 @@ let GamePage (props: GameProps) =
                                                     prop.text t.SelectedMove
                                                 ]
 
-                                            match promotionPicker with
-                                            | Some(from, target) ->
+                                            match staged with
+                                            | Some(from, target, _) ->
                                                 yield
                                                     Html.div [
-                                                        prop.className "flex flex-col gap-2"
-                                                        prop.children [
-                                                            Html.span [ prop.className "text-sm"; prop.text t.Promotion ]
-                                                            Html.div [
-                                                                prop.className "grid grid-cols-4 gap-2"
-                                                                prop.children [
-                                                                    for kind in [ Queen; Rook; Bishop; Knight ] do
-                                                                        yield
-                                                                            Html.button [
-                                                                                prop.key (string kind)
-                                                                                prop.type'.button
-                                                                                prop.className
-                                                                                    "h-10 rounded border border-outline-variant hover:border-primary text-on-surface font-mono"
-                                                                                prop.onClick (fun _ ->
-                                                                                    setStaged (Some(from, target, Some kind))
-                                                                                    setPromotionPicker None)
-                                                                                prop.text (string (Notation.pieceLetter kind))
-                                                                            ]
-                                                                ]
-                                                            ]
-                                                        ]
+                                                        prop.className "font-mono text-2xl font-black text-primary"
+                                                        prop.text (
+                                                            sprintf "%s – %s" (Square.toAlgebraic from) (Square.toAlgebraic target)
+                                                        )
                                                     ]
                                             | None ->
-                                                match staged with
-                                                | Some(from, target, _) ->
-                                                    yield
-                                                        Html.div [
-                                                            prop.className "font-mono text-2xl font-black text-primary"
-                                                            prop.text (
-                                                                sprintf "%s – %s" (Square.toAlgebraic from) (Square.toAlgebraic target)
-                                                            )
-                                                        ]
-                                                | None ->
-                                                    yield
-                                                        Html.span [
-                                                            prop.className "text-sm text-on-surface-variant italic"
-                                                            prop.text "—"
-                                                        ]
+                                                yield
+                                                    Html.span [
+                                                        prop.className "text-sm text-on-surface-variant italic"
+                                                        prop.text "—"
+                                                    ]
                                         ]
                                     ]
 

@@ -55,7 +55,8 @@ type T =
       DigestSent: string
       ListInBrowser: string
       NoGames: string
-      Open: string }
+      Open: string
+      Material: string }
 
 let private en: T =
     { AppName = "W3Chess"
@@ -108,7 +109,8 @@ let private en: T =
       DigestSent = "Your games have been emailed to you."
       ListInBrowser = "List in browser"
       NoGames = "No games found for this address."
-      Open = "Open" }
+      Open = "Open"
+      Material = "Material" }
 
 let private de: T =
     { AppName = "W3Chess"
@@ -161,7 +163,8 @@ let private de: T =
       DigestSent = "Deine Partien wurden per E-Mail verschickt."
       ListInBrowser = "Im Browser auflisten"
       NoGames = "Keine Partien zu dieser Adresse gefunden."
-      Open = "Öffnen" }
+      Open = "Öffnen"
+      Material = "Material" }
 
 let ofLang lang = if lang = De then de else en
 
