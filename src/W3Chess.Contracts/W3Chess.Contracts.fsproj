@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <Compile Include="Contracts.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\W3Chess.Domain\W3Chess.Domain.fsproj" />
+  </ItemGroup>
+
+</Project>
