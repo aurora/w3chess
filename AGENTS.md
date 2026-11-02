@@ -111,6 +111,9 @@ docs/implementation-plan.md
 ## Common commands
 
 ```sh
+# Everything at once: build, then server + client + MailDev, cleaned up on exit
+./scripts/dev.sh
+
 # .NET
 ~/.dotnet/dotnet build
 ~/.dotnet/dotnet test
