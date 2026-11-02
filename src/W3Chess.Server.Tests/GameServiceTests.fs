@@ -39,7 +39,7 @@ let private makeService (settings: AppSettings) (mails: ResizeArray<Mail>) =
     let notifier =
         { Send = fun mail -> async { mails.Add mail } }
 
-    GameService(settings, notifier)
+    GameService(settings, notifier, GameEvents())
 
 let private createOpenRequest =
     { Nickname = "Alice"

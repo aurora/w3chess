@@ -13,9 +13,11 @@
     <Compile Include="Services/EmailTemplates.fs" />
     <Compile Include="Services/EmailService.fs" />
     <Compile Include="Services/Notifier.fs" />
+    <Compile Include="Services/GameEvents.fs" />
     <Compile Include="Services/GameService.fs" />
     <Compile Include="Services/ImportService.fs" />
     <Compile Include="Api/ServerApi.fs" />
+    <Compile Include="Api/EventStream.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

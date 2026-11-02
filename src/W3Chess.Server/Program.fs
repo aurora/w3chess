@@ -46,7 +46,8 @@ let main args =
             builder.WebHost.UseUrls("http://localhost:5000") |> ignore
 
         let notifier = Notifier.email settings.Smtp
-        let gameService = GameService(settings, notifier)
+        let gameEvents = GameEvents()
+        let gameService = GameService(settings, notifier, gameEvents)
         let api = ServerApi.create gameService
 
         let remoting =
@@ -56,7 +57,12 @@ let main args =
             |> Remoting.buildHttpHandler
 
         let webApp =
-            choose [ route "/health" >=> text "ok"; remoting ]
+            choose [
+                route "/health" >=> text "ok"
+                routef "/api/game/%s/events" (fun gameId ->
+                    EventStream.handler gameEvents settings.TokenSecret gameId)
+                remoting
+            ]
 
         builder.Services.AddGiraffe() |> ignore
         builder.Services.AddCors() |> ignore

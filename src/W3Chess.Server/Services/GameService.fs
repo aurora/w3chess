@@ -8,7 +8,7 @@ open W3Chess.Server
 open W3Chess.Server.Storage
 
 /// Application logic for creating, joining and playing correspondence games.
-type GameService(settings: AppSettings, notifier: Notifier) =
+type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEvents) =
 
     let connect () = Db.connect settings.DatabasePath
 
@@ -248,6 +248,8 @@ type GameService(settings: AppSettings, notifier: Notifier) =
                             UpdatedAt = now
                             LastMessage = (defaultArg request.Message game.LastMessage) }
 
+                    gameEvents.Publish(game.Id, "updated")
+
                     let playerToken = TokenService.create settings.TokenSecret game.Id playerId
                     let boardText = legacyBoardOf game.CurrentFen
 
@@ -445,6 +447,8 @@ type GameService(settings: AppSettings, notifier: Notifier) =
 
                         GameRepository.update connection updated
 
+                        gameEvents.Publish(request.GameId, "updated")
+
                         let boardText = legacyBoardOf updated.CurrentFen
 
                         match opponent with
@@ -528,6 +532,8 @@ type GameService(settings: AppSettings, notifier: Notifier) =
                             DrawOfferBy = ""
                             LastMessage = (defaultArg request.Message game.LastMessage) }
 
+                    gameEvents.Publish(request.GameId, "updated")
+
                     let players = GamePlayerRepository.listByGame connection request.GameId
 
                     for gp in players do
@@ -566,6 +572,8 @@ type GameService(settings: AppSettings, notifier: Notifier) =
                             UpdatedAt = Db.nowIso()
                             LastMessage = (defaultArg request.Message game.LastMessage) }
 
+                    gameEvents.Publish(request.GameId, "updated")
+
                     return { Ok = true; Error = None }
         }
 
@@ -588,6 +596,8 @@ type GameService(settings: AppSettings, notifier: Notifier) =
                             Result = "1/2-1/2"
                             UpdatedAt = Db.nowIso()
                             DrawOfferBy = "" }
+
+                    gameEvents.Publish(request.GameId, "updated")
 
                     let players = GamePlayerRepository.listByGame connection request.GameId
 
