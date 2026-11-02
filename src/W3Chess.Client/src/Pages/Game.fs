@@ -29,29 +29,35 @@ let GamePage (props: GameProps) =
 
     let reload () =
         async {
-            let! view = Api.api.GetGame props.GameId
-            setGameView view
+            try
+                let! view = Api.api.GetGame props.GameId
+                setGameView view
+            with ex ->
+                setError (Some(sprintf "%s: %s" t.Error ex.Message))
         }
 
     React.useEffect (
         (fun () ->
             async {
-                match Api.loadCredentials props.GameId with
-                | Some credentials -> setCredentials (Some credentials)
-                | None ->
-                    match props.Token with
-                    | Some token ->
-                        let! validated = Api.api.ValidateToken props.GameId token
+                try
+                    match Api.loadCredentials props.GameId with
+                    | Some credentials -> setCredentials (Some credentials)
+                    | None ->
+                        match props.Token with
+                        | Some token ->
+                            let! validated = Api.api.ValidateToken props.GameId token
 
-                        match validated with
-                        | Some credentials ->
-                            Api.saveCredentials credentials
-                            setCredentials (Some credentials)
-                        | None -> setError (Some t.Error)
-                    | None -> ()
+                            match validated with
+                            | Some credentials ->
+                                Api.saveCredentials credentials
+                                setCredentials (Some credentials)
+                            | None -> setError (Some t.Error)
+                        | None -> ()
 
-                let! _ = reload ()
-                ()
+                    let! _ = reload ()
+                    ()
+                with ex ->
+                    setError (Some(sprintf "%s: %s" t.Error ex.Message))
             }
             |> Async.StartImmediate),
         [| box props.GameId |]
@@ -79,30 +85,34 @@ let GamePage (props: GameProps) =
             match credentials with
             | None -> setError (Some t.Error)
             | Some credentials ->
-                setBusy true
-                setError None
+                try
+                    setBusy true
+                    setError None
 
-                let! response =
-                    Api.api.SubmitMove
-                        { GameId = props.GameId
-                          PlayerId = credentials.PlayerId
-                          Token = credentials.Token
-                          FromSquare = from
-                          ToSquare = target
-                          Promotion = promotion
-                          Message = (if message = "" then None else Some message) }
+                    let! response =
+                        Api.api.SubmitMove
+                            { GameId = props.GameId
+                              PlayerId = credentials.PlayerId
+                              Token = credentials.Token
+                              FromSquare = from
+                              ToSquare = target
+                              Promotion = promotion
+                              Message = (if message = "" then None else Some message) }
 
-                setBusy false
+                    setBusy false
 
-                if response.Ok then
-                    setStaged None
-                    setSelected None
-                    setMessage ""
-                    let! _ = reload ()
-                    ()
-                else
-                    setError response.Error
-                    setStaged None
+                    if response.Ok then
+                        setStaged None
+                        setSelected None
+                        setMessage ""
+                        let! _ = reload ()
+                        ()
+                    else
+                        setError response.Error
+                        setStaged None
+                with ex ->
+                    setBusy false
+                    setError (Some(sprintf "%s: %s" t.Error ex.Message))
         }
         |> Async.StartImmediate
 
@@ -139,16 +149,20 @@ let GamePage (props: GameProps) =
             match credentials with
             | None -> setError (Some t.Error)
             | Some credentials ->
-                setBusy true
-                setError None
-                let! response = call credentials
-                setBusy false
+                try
+                    setBusy true
+                    setError None
+                    let! response = call credentials
+                    setBusy false
 
-                if response.Ok then
-                    let! _ = reload ()
-                    ()
-                else
-                    setError response.Error
+                    if response.Ok then
+                        let! _ = reload ()
+                        ()
+                    else
+                        setError response.Error
+                with ex ->
+                    setBusy false
+                    setError (Some(sprintf "%s: %s" t.Error ex.Message))
         }
         |> Async.StartImmediate
 

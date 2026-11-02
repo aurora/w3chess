@@ -54,65 +54,78 @@ let Lobby (props: LobbyProps) =
 
     let handleCreate () =
         async {
-            setBusy true
-            setError None
+            try
+                setBusy true
+                setError None
 
-            let! response =
-                Api.api.CreateGame
-                    { Nickname = nickname
-                      Email = email
-                      ColorChoice = color
-                      OpponentNickname = optional opponentNick
-                      OpponentEmail = optional opponentEmail
-                      Message = optional message
-                      Language = I18n.code props.Lang }
+                let! response =
+                    Api.api.CreateGame
+                        { Nickname = nickname
+                          Email = email
+                          ColorChoice = color
+                          OpponentNickname = optional opponentNick
+                          OpponentEmail = optional opponentEmail
+                          Message = optional message
+                          Language = I18n.code props.Lang }
 
-            setBusy false
+                setBusy false
 
-            match response with
-            | Ok credentials ->
-                Api.saveCredentials credentials
-                props.OnOpenGame credentials.GameId
-            | Error message -> setError (Some message)
+                match response with
+                | Ok credentials ->
+                    Api.saveCredentials credentials
+                    props.OnOpenGame credentials.GameId
+                | Error message -> setError (Some message)
+            with ex ->
+                setBusy false
+                setError (Some(sprintf "%s: %s" t.Error ex.Message))
         }
         |> Async.StartImmediate
 
     let handleJoin (gameId: string) =
         async {
-            setBusy true
-            setError None
+            try
+                setBusy true
+                setError None
 
-            let! response =
-                Api.api.JoinGame
-                    { GameId = gameId
-                      Nickname = nickname
-                      Email = email
-                      Message = None
-                      Language = I18n.code props.Lang }
+                let! response =
+                    Api.api.JoinGame
+                        { GameId = gameId
+                          Nickname = nickname
+                          Email = email
+                          Message = None
+                          Language = I18n.code props.Lang }
 
-            setBusy false
+                setBusy false
 
-            match response with
-            | Ok credentials ->
-                Api.saveCredentials credentials
-                props.OnOpenGame credentials.GameId
-            | Error message -> setError (Some message)
+                match response with
+                | Ok credentials ->
+                    Api.saveCredentials credentials
+                    props.OnOpenGame credentials.GameId
+                | Error message -> setError (Some message)
+            with ex ->
+                setBusy false
+                setError (Some(sprintf "%s: %s" t.Error ex.Message))
         }
         |> Async.StartImmediate
 
     let handleDigest () =
         async {
-            setBusy true
-            setError None
-            setNotice None
+            try
+                setBusy true
+                setError None
+                setNotice None
 
-            let! response =
-                Api.api.RequestDigest { Email = (if digestEmail = "" then email else digestEmail); Language = I18n.code props.Lang }
+                let! response =
+                    Api.api.RequestDigest
+                        { Email = (if digestEmail = "" then email else digestEmail)
+                          Language = I18n.code props.Lang }
 
-            setBusy false
+                setBusy false
 
-            if response.Ok then setNotice (Some t.DigestSent)
-            else setError response.Error
+                if response.Ok then setNotice (Some t.DigestSent) else setError response.Error
+            with ex ->
+                setBusy false
+                setError (Some(sprintf "%s: %s" t.Error ex.Message))
         }
         |> Async.StartImmediate
 
