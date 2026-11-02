@@ -201,3 +201,8 @@ $RECYCLE.BIN/
 fable_modules/
 *.fs.js
 *.fs.js.map
+
+### Local data
+*.db
+*.db-shm
+*.db-wal
