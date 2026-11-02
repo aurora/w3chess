@@ -36,14 +36,14 @@ let Lobby (props: LobbyProps) =
     let message, setMessage = React.useState ("")
     let resumeId, setResumeId = React.useState ("")
     let digestEmail, setDigestEmail = React.useState ("")
-    let openGames, setOpenGames = React.useState ([]: OpenGame list)
+    let openGames, setOpenGames = React.useState ([||]: OpenGame[])
     let error, setError = React.useState (None: string option)
     let notice, setNotice = React.useState (None: string option)
     let busy, setBusy = React.useState (false)
 
     let loadOpen () =
         async {
-            let! games = Api.api.ListOpenGames()
+            let! games = Api.listOpenGames()
             setOpenGames games
         }
         |> Async.StartImmediate
@@ -59,7 +59,7 @@ let Lobby (props: LobbyProps) =
                 setError None
 
                 let! response =
-                    Api.api.CreateGame
+                    Api.createGame
                         { Nickname = nickname
                           Email = email
                           ColorChoice = color
@@ -88,7 +88,7 @@ let Lobby (props: LobbyProps) =
                 setError None
 
                 let! response =
-                    Api.api.JoinGame
+                    Api.joinGame
                         { GameId = gameId
                           Nickname = nickname
                           Email = email
@@ -116,7 +116,7 @@ let Lobby (props: LobbyProps) =
                 setNotice None
 
                 let! response =
-                    Api.api.RequestDigest
+                    Api.requestDigest
                         { Email = (if digestEmail = "" then email else digestEmail)
                           Language = I18n.code props.Lang }
 
@@ -289,7 +289,7 @@ let Lobby (props: LobbyProps) =
                     prop.children [
                         yield Html.h2 [ prop.className "text-xl font-bold text-on-surface"; prop.text t.OpenTables ]
 
-                        if List.isEmpty openGames then
+                        if Array.isEmpty openGames then
                             yield Html.p [ prop.className "text-sm text-on-surface-variant"; prop.text t.NoOpenGames ]
                         else
                             yield

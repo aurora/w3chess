@@ -30,7 +30,7 @@ let GamePage (props: GameProps) =
     let reload () =
         async {
             try
-                let! view = Api.api.GetGame props.GameId
+                let! view = Api.getGame props.GameId
                 setGameView view
             with ex ->
                 setError (Some(sprintf "%s: %s" t.Error ex.Message))
@@ -45,7 +45,7 @@ let GamePage (props: GameProps) =
                     | None ->
                         match props.Token with
                         | Some token ->
-                            let! validated = Api.api.ValidateToken props.GameId token
+                            let! validated = Api.validateToken props.GameId token
 
                             match validated with
                             | Some credentials ->
@@ -76,7 +76,7 @@ let GamePage (props: GameProps) =
     let lastMove =
         gameView
         |> Option.bind (fun view ->
-            match List.tryLast view.Moves with
+            match Array.tryLast view.Moves with
             | Some move -> Some(move.FromSquare, move.ToSquare)
             | None -> None)
 
@@ -90,7 +90,7 @@ let GamePage (props: GameProps) =
                     setError None
 
                     let! response =
-                        Api.api.SubmitMove
+                        Api.submitMove
                             { GameId = props.GameId
                               PlayerId = credentials.PlayerId
                               Token = credentials.Token
@@ -185,7 +185,7 @@ let GamePage (props: GameProps) =
         | None -> fallback
 
     let moveList (view: GameView) =
-        if List.isEmpty view.Moves then
+        if Array.isEmpty view.Moves then
             Html.p [ prop.className "text-sm text-on-surface-variant"; prop.text t.NoMoves ]
         else
             Html.div [
@@ -397,7 +397,7 @@ let GamePage (props: GameProps) =
                                                 prop.disabled (busy || credentials.IsNone)
                                                 prop.onClick (fun _ ->
                                                     action (fun credentials ->
-                                                        Api.api.OfferDraw
+                                                        Api.offerDraw
                                                             { GameId = props.GameId
                                                               PlayerId = credentials.PlayerId
                                                               Token = credentials.Token
@@ -410,7 +410,7 @@ let GamePage (props: GameProps) =
                                                 prop.disabled (busy || credentials.IsNone)
                                                 prop.onClick (fun _ ->
                                                     action (fun credentials ->
-                                                        Api.api.Resign
+                                                        Api.resign
                                                             { GameId = props.GameId
                                                               PlayerId = credentials.PlayerId
                                                               Token = credentials.Token
@@ -435,7 +435,7 @@ let GamePage (props: GameProps) =
                                                     prop.disabled (busy || credentials.IsNone)
                                                     prop.onClick (fun _ ->
                                                         action (fun credentials ->
-                                                            Api.api.AcceptDraw
+                                                            Api.acceptDraw
                                                                 { GameId = props.GameId
                                                                   PlayerId = credentials.PlayerId
                                                                   Token = credentials.Token
