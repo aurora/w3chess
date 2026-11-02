@@ -83,7 +83,7 @@ docs/adr/                # Architecture Decision Records
   SignalR remains an option if presence or groups are needed later.
 - Optional AI opponent (neither planned nor excluded).
 - Additional draw rules (threefold repetition), clock/ICCF time controls, ELO,
-  accounts, admin mode.
+  admin mode, richer account features (login links in game mails, account page).
 
 ## Notes
 
@@ -113,3 +113,8 @@ docs/adr/                # Architecture Decision Records
 - 2026-11-02: Real-time updates: token-authenticated SSE per game (ADR 0008)
   with an in-memory pub/sub; the game view reloads on `updated`. Verified the
   endpoint with curl (401 for a bad token, `updated` after a move).
+- 2026-11-02: Optional passwordless accounts (ADR 0009): email magic link →
+  session bearer token; sessions authorise game actions and SSE in addition to
+  the per-game token; lobby prefills from the account and the header offers
+  login/logout. `Auth:RequireAccount` defaults to false. Verified end to end
+  (request login → mail token → session → create game → session move).
