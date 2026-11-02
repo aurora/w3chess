@@ -53,14 +53,15 @@ docs/adr/                # Architecture Decision Records
 - [x] Legacy text-file importer (`LegacyImport.fs`) with replay validation
 
 ### Server (`W3Chess.Server`)
-- [ ] Kestrel host, configuration, DI
-- [ ] Schema + idempotent migration runner; Dapper repositories
-- [ ] Game service: new, join, resume, move, resign, draw, message
-- [ ] Token service (signed email links)
-- [ ] Email service (MailKit) + templates (EN/DE); MailDev dev default
-- [ ] REST/remoting API for the client
-- [ ] Legacy import endpoint/CLI
-- [ ] `Notifier` abstraction (email now, realtime later)
+- [x] Kestrel host, configuration, DI
+- [x] Schema + idempotent migration runner; Dapper repositories
+- [x] Game service: new, join, resume, move, resign, draw, message
+- [x] Token service (signed email links)
+- [x] Email service (MailKit) + templates (EN/DE); MailDev dev default
+- [x] REST/remoting API for the client
+- [x] Legacy import endpoint/CLI
+- [x] `Notifier` abstraction (email now, realtime later)
+- [x] Integration tests for the full game flow
 
 ### Client (`W3Chess.Client`)
 - [ ] Fable + Feliz + Vite + Tailwind project setup
@@ -87,3 +88,8 @@ docs/adr/                # Architecture Decision Records
 
 - 2026-11-02: Plan approved; engine implemented and green. Next: legacy importer,
   then the server storage/service/email layer, then the client.
+- 2026-11-02: Legacy importer done and tested. Server storage, game service,
+  signed-link tokens, MailKit email (EN/DE), import CLI and the Fable.Remoting
+  API implemented; integration tests green; `/health` and the remoting endpoint
+  verified against a running Kestrel host. Next: the Fable client (project setup,
+  theme layer, i18n, board, lobby, game view).
