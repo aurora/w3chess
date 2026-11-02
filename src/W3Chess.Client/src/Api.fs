@@ -118,6 +118,14 @@ let private decodeOpenGame (json: obj) : OpenGame =
       CreatedAt = unbox json?CreatedAt
       Message = optValue json?Message }
 
+let private decodeArchiveGame (json: obj) : ArchiveGame =
+    { GameId = unbox json?GameId
+      White = optValue json?White
+      Black = optValue json?Black
+      Status = statusOfString (unbox json?Status)
+      Result = optValue json?Result
+      UpdatedAt = unbox json?UpdatedAt }
+
 let private decodeAction (json: obj) : ActionResponse =
     { Ok = unbox json?Ok
       Error = optValue json?Error }
@@ -126,6 +134,12 @@ let listOpenGames () : Async<OpenGame[]> =
     async {
         let! text = post "ListOpenGames" [||]
         return (unbox<obj[]> (jsonParse text)) |> Array.map decodeOpenGame
+    }
+
+let listGamesForEmail (email: string) : Async<ArchiveGame[]> =
+    async {
+        let! text = post "ListGamesForEmail" [| box email |]
+        return (unbox<obj[]> (jsonParse text)) |> Array.map decodeArchiveGame
     }
 
 let createGame (request: CreateGameRequest) : Async<Result<PlayerCredentials, string>> =

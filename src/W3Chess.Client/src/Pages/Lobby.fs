@@ -28,6 +28,17 @@ let private field (label: string) (value: string) (onChange: string -> unit) (pl
 [<ReactComponent>]
 let Lobby (props: LobbyProps) =
     let t = I18n.ofLang props.Lang
+
+    let statusLabel (game: ArchiveGame) =
+        let baseText =
+            match game.Status with
+            | GameStatus.Waiting -> t.Waiting
+            | GameStatus.Active -> t.Active
+            | GameStatus.Finished -> t.Finished
+
+        match game.Result with
+        | Some result -> baseText + " · " + result
+        | None -> baseText
     let nickname, setNickname = React.useState ("")
     let email, setEmail = React.useState ("")
     let color, setColor = React.useState (ColorChoice.RandomColor)
@@ -40,6 +51,8 @@ let Lobby (props: LobbyProps) =
     let error, setError = React.useState (None: string option)
     let notice, setNotice = React.useState (None: string option)
     let busy, setBusy = React.useState (false)
+    let archiveGames, setArchiveGames = React.useState ([||]: ArchiveGame[])
+    let showArchive, setShowArchive = React.useState (false)
 
     let loadOpen () =
         async {
@@ -123,6 +136,24 @@ let Lobby (props: LobbyProps) =
                 setBusy false
 
                 if response.Ok then setNotice (Some t.DigestSent) else setError response.Error
+            with ex ->
+                setBusy false
+                setError (Some(sprintf "%s: %s" t.Error ex.Message))
+        }
+        |> Async.StartImmediate
+
+    let handleList () =
+        async {
+            try
+                setBusy true
+                setError None
+
+                let! games =
+                    Api.listGamesForEmail (if digestEmail = "" then email else digestEmail)
+
+                setArchiveGames games
+                setShowArchive true
+                setBusy false
             with ex ->
                 setBusy false
                 setError (Some(sprintf "%s: %s" t.Error ex.Message))
@@ -276,6 +307,63 @@ let Lobby (props: LobbyProps) =
                                             prop.onClick (fun _ -> handleDigest ())
                                             prop.text t.RequestDigest
                                         ]
+                                        Html.button [
+                                            prop.type'.button
+                                            prop.className
+                                                "h-11 rounded border border-outline-variant text-on-surface hover:border-primary disabled:opacity-50"
+                                            prop.disabled busy
+                                            prop.onClick (fun _ -> handleList ())
+                                            prop.text t.ListInBrowser
+                                        ]
+                                        if showArchive then
+                                            (if Array.isEmpty archiveGames then
+                                                Html.p [ prop.className "text-sm text-on-surface-variant"; prop.text t.NoGames ]
+                                             else
+                                                Html.div [
+                                                    prop.className "flex flex-col gap-2"
+                                                    prop.children [
+                                                        for game in archiveGames do
+                                                            yield
+                                                                Html.div [
+                                                                    prop.key game.GameId
+                                                                    prop.className
+                                                                        "flex items-center justify-between gap-2 rounded border border-outline-variant px-3 py-2"
+                                                                    prop.children [
+                                                                        Html.div [
+                                                                            prop.className "flex flex-col"
+                                                                            prop.children [
+                                                                                Html.span [
+                                                                                    prop.className "font-mono text-xs text-on-surface-variant"
+                                                                                    prop.text game.GameId
+                                                                                ]
+                                                                                Html.span [
+                                                                                    prop.className "text-sm text-on-surface"
+                                                                                    prop.text (
+                                                                                        sprintf
+                                                                                            "%s vs %s"
+                                                                                            (defaultArg game.White "?")
+                                                                                            (defaultArg game.Black "?")
+                                                                                    )
+                                                                                ]
+                                                                                Html.span [
+                                                                                    prop.className "text-xs text-on-surface-variant"
+                                                                                    prop.text (statusLabel game)
+                                                                                ]
+                                                                            ]
+                                                                        ]
+                                                                        Html.button [
+                                                                            prop.type'.button
+                                                                            prop.className
+                                                                                "h-8 px-3 rounded border border-primary text-primary text-sm"
+                                                                            prop.onClick (fun _ -> props.OnOpenGame game.GameId)
+                                                                            prop.text t.Open
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                    ]
+                                                ])
+                                        else
+                                            Html.none
                                     ]
                                 ]
                             ]

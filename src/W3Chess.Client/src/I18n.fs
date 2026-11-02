@@ -52,7 +52,10 @@ type T =
       Error: string
       OpponentMessage: string
       Promotion: string
-      DigestSent: string }
+      DigestSent: string
+      ListInBrowser: string
+      NoGames: string
+      Open: string }
 
 let private en: T =
     { AppName = "W3Chess"
@@ -102,7 +105,10 @@ let private en: T =
       Error = "Something went wrong"
       OpponentMessage = "Opponent's message"
       Promotion = "Choose promotion"
-      DigestSent = "Your games have been emailed to you." }
+      DigestSent = "Your games have been emailed to you."
+      ListInBrowser = "List in browser"
+      NoGames = "No games found for this address."
+      Open = "Open" }
 
 let private de: T =
     { AppName = "W3Chess"
@@ -152,7 +158,10 @@ let private de: T =
       Error = "Etwas ist schiefgelaufen"
       OpponentMessage = "Nachricht des Gegners"
       Promotion = "Umwandlung wählen"
-      DigestSent = "Deine Partien wurden per E-Mail verschickt." }
+      DigestSent = "Deine Partien wurden per E-Mail verschickt."
+      ListInBrowser = "Im Browser auflisten"
+      NoGames = "Keine Partien zu dieser Adresse gefunden."
+      Open = "Öffnen" }
 
 let ofLang lang = if lang = De then de else en
 
