@@ -64,6 +64,14 @@ type OpenGame =
       CreatedAt: string
       Message: string option }
 
+type ArchiveGame =
+    { GameId: string
+      White: string option
+      Black: string option
+      Status: GameStatus
+      Result: string option
+      UpdatedAt: string }
+
 type SubmitMoveRequest =
     { GameId: string
       PlayerId: string
@@ -100,4 +108,5 @@ type IW3ChessApi =
       OfferDraw: ActionRequest -> Async<ActionResponse>
       AcceptDraw: ActionRequest -> Async<ActionResponse>
       ListOpenGames: unit -> Async<OpenGame[]>
+      ListGamesForEmail: string -> Async<ArchiveGame[]>
       RequestDigest: DigestRequest -> Async<ActionResponse> }

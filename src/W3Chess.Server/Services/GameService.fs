@@ -337,6 +337,36 @@ type GameService(settings: AppSettings, notifier: Notifier) =
                 |> Array.ofList
         }
 
+    member _.ListGamesForEmail(email: string) : Async<ArchiveGame[]> =
+        async {
+            use connection = connect ()
+
+            return
+                GameRepository.listForEmail connection email
+                |> List.map (fun game ->
+                    let players = GamePlayerRepository.listByGame connection game.Id
+
+                    let nickname color =
+                        players
+                        |> List.tryFind (fun gp -> gp.Color = color)
+                        |> Option.bind (fun gp -> PlayerRepository.findById connection gp.PlayerId)
+                        |> Option.map (fun player -> player.Nickname)
+
+                    let status =
+                        match game.Status with
+                        | "waiting" -> GameStatus.Waiting
+                        | "active" -> GameStatus.Active
+                        | _ -> GameStatus.Finished
+
+                    { GameId = game.Id
+                      White = nickname "w"
+                      Black = nickname "b"
+                      Status = status
+                      Result = (if game.Result = "" then None else Some game.Result)
+                      UpdatedAt = game.UpdatedAt })
+                |> Array.ofList
+        }
+
     /// Validates credentials and returns the game, game player and open connection.
     member private _.Authorise(gameId: string, playerId: string, token: string) =
         let connection = connect ()

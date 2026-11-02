@@ -15,4 +15,5 @@ module ServerApi =
           OfferDraw = fun request -> gameService.OfferDraw request
           AcceptDraw = fun request -> gameService.AcceptDraw request
           ListOpenGames = fun () -> gameService.ListOpenGames()
+          ListGamesForEmail = fun email -> gameService.ListGamesForEmail email
           RequestDigest = fun request -> gameService.RequestDigest request }
