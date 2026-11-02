@@ -99,8 +99,8 @@ type GameService(settings: AppSettings, notifier: Notifier) =
 
                 let creatorColor =
                     match request.ColorChoice with
-                    | ColorChoice.White -> Color.White
-                    | ColorChoice.Black -> Color.Black
+                    | ColorChoice.AsWhite -> Color.White
+                    | ColorChoice.AsBlack -> Color.Black
                     | ColorChoice.RandomColor -> if Random().Next(2) = 0 then Color.White else Color.Black
 
                 PlayerRepository.insert

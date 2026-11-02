@@ -4,8 +4,8 @@ open W3Chess.Domain
 
 /// Colour chosen when creating a game.
 type ColorChoice =
-    | White
-    | Black
+    | AsWhite
+    | AsBlack
     | RandomColor
 
 /// Lifecycle of a game as seen by the client.
