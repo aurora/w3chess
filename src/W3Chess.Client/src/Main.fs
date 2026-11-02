@@ -42,14 +42,39 @@ let private browserLanguage () : string =
     let language: obj = window?navigator?language
     if isNull language then "en" else string language
 
+let private queryParam (name: string) (query: string) =
+    query.Split('&')
+    |> Array.tryPick (fun pair ->
+        match pair.Split('=') with
+        | [| key; value |] when key = name -> Some value
+        | _ -> None)
+
+/// `?lang=en|de`, either in the search string or in the hash query.
+let private languageOverride () =
+    let fromSearch = queryParam "lang" (window.location.search.TrimStart('?'))
+    let fromHash =
+        let hash = window.location.hash
+
+        match hash.IndexOf('?') with
+        | -1 -> None
+        | index -> queryParam "lang" (hash.Substring(index + 1))
+
+    match fromSearch, fromHash with
+    | Some code, _ -> Some(I18n.ofCode code)
+    | None, Some code -> Some(I18n.ofCode code)
+    | None, None -> None
+
+let private initialLang () =
+    match languageOverride () with
+    | Some lang -> lang
+    | None ->
+        match localStorage.getItem "w3chess.lang" with
+        | null -> I18n.ofCode (browserLanguage ())
+        | stored -> I18n.ofCode stored
+
 [<ReactComponent>]
 let App () =
-    let lang, setLang =
-        React.useState (
-            match localStorage.getItem "w3chess.lang" with
-            | null -> I18n.ofCode (browserLanguage ())
-            | stored -> I18n.ofCode stored
-        )
+    let lang, setLang = React.useState (initialLang ())
 
     let theme, setTheme =
         React.useState (
