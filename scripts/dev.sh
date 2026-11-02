@@ -24,10 +24,27 @@ stop_all() {
     trap - EXIT INT TERM
     echo
     echo "==> Stopping dev services"
+
+    # Stop the host processes we started (server + distrobox wrappers).
     for pid in "${pids[@]:-}"; do
         # Kill the whole process group; fall back to the single process.
         kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
     done
+
+    # Processes inside the distrobox container are not children of the host
+    # wrapper and survive killing it, so stop them explicitly. The bracket in
+    # each pattern stops pkill from matching this cleanup command itself.
+    if command -v distrobox >/dev/null 2>&1; then
+        timeout 20 distrobox enter "$CONTAINER" -- bash -lc "
+            pkill -f '[W]3Chess.Client/node_modules/.bin/vite' || true
+            pkill -f '[n]px --yes vite' || true
+            pkill -f '[m]aildev' || true
+        " >/dev/null 2>&1 || true
+    fi
+
+    # Safety net for the Kestrel server on the host.
+    pkill -f '[W]3Chess.Server' 2>/dev/null || true
+
     wait 2>/dev/null || true
     echo "==> All stopped"
 }
