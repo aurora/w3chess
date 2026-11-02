@@ -1,5 +1,6 @@
 module W3Chess.Client.Components.Board
 
+open Browser.Types
 open Feliz
 open W3Chess.Domain
 
@@ -9,7 +10,9 @@ type Props =
       Selected: Square option
       Targets: Square list
       LastMove: (Square * Square) option
-      OnClick: Square -> unit }
+      OnClick: Square -> unit
+      OnDragStart: Square -> unit
+      OnDrop: Square -> Square -> unit }
 
 let private glyph kind =
     match kind with
@@ -49,6 +52,21 @@ let view (props: Props) =
                                 + (if isDark then "bg-board-dark" else "bg-board-light")
                             )
                             prop.onClick (fun _ -> props.OnClick square)
+                            prop.draggable (
+                                match piece with
+                                | Some value -> value.Color = props.Position.SideToMove
+                                | None -> false
+                            )
+                            prop.onDragStart (fun (event: DragEvent) ->
+                                event.dataTransfer.setData ("text/plain", string square) |> ignore
+                                props.OnDragStart square)
+                            prop.onDragOver (fun (event: DragEvent) -> event.preventDefault ())
+                            prop.onDrop (fun (event: DragEvent) ->
+                                event.preventDefault ()
+
+                                match System.Int32.TryParse(event.dataTransfer.getData "text/plain") with
+                                | true, source -> props.OnDrop source square
+                                | _ -> ())
                             prop.children [
                                 if isLast then
                                     yield Html.div [ prop.className "absolute inset-0 bg-primary/20" ]

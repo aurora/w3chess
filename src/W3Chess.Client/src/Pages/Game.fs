@@ -144,6 +144,20 @@ let GamePage (props: GameProps) =
                     | _ -> setSelected None
         | _ -> ()
 
+    let onDragStart (square: Square) =
+        match position with
+        | Some position ->
+            match position.Board.[square] with
+            | Some piece when piece.Color = position.SideToMove -> setSelected (Some square)
+            | _ -> ()
+        | None -> ()
+
+    let onDrop (source: Square) (target: Square) =
+        if source <> target && List.contains target (targets source) then
+            stage source target
+        else
+            setSelected None
+
     let action (call: PlayerCredentials -> Async<ActionResponse>) =
         async {
             match credentials with
@@ -268,7 +282,9 @@ let GamePage (props: GameProps) =
                                               Selected = selected
                                               Targets = (match selected with Some from -> targets from | None -> [])
                                               LastMove = lastMove
-                                              OnClick = onClick }
+                                              OnClick = onClick
+                                              OnDragStart = onDragStart
+                                              OnDrop = onDrop }
                                 | None -> yield Html.div [ prop.className "aspect-square bg-surface-container-low rounded-lg" ]
                                 yield
                                     Html.div [
