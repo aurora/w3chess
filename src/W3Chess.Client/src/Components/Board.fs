@@ -25,7 +25,8 @@ let view (props: Props) =
     let files = if props.Orientation = White then [ 0..7 ] else [ 7..-1..0 ]
 
     Html.div [
-        prop.className "grid grid-cols-8 aspect-square w-full rounded-md overflow-hidden select-none shadow-xl"
+        prop.className
+            "grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] aspect-square w-full rounded-md overflow-hidden select-none shadow-xl [container-type:inline-size]"
         prop.children [
             for rank in ranks do
                 for file in files do
@@ -44,7 +45,7 @@ let view (props: Props) =
                         Html.div [
                             prop.key (string square)
                             prop.className (
-                                "relative flex items-center justify-center cursor-pointer text-4xl sm:text-5xl leading-none "
+                                "relative flex items-center justify-center cursor-pointer leading-none min-h-0 min-w-0 overflow-hidden "
                                 + (if isDark then "bg-board-dark" else "bg-board-light")
                             )
                             prop.onClick (fun _ -> props.OnClick square)
@@ -57,7 +58,7 @@ let view (props: Props) =
                                     yield
                                         Html.span [
                                             prop.className (
-                                                "relative z-10 "
+                                                "relative z-10 leading-none text-[9cqw] "
                                                 + (if value.Color = White then "piece-white" else "piece-black")
                                             )
                                             prop.text (glyph value.Kind)
