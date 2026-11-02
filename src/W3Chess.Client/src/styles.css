@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: #f9f9f9;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f3f3f3;
+  --surface-container: #eeeeee;
+  --surface-container-high: #e8e8e8;
+  --surface-container-highest: #e2e2e2;
+  --on-surface: #1a1c1c;
+  --on-surface-variant: #47464a;
+  --outline: #78767b;
+  --outline-variant: #c8c5ca;
+  --primary: #4f46e5;
+  --on-primary: #ffffff;
+  --secondary: #0e7490;
+  --on-secondary: #ffffff;
+  --error: #ba1a1a;
+  --background: #f9f9f9;
+  --on-background: #1a1c1c;
+  --board-light: #ffffff;
+  --board-dark: #e6e6ef;
+  --accent: #4f46e5;
+}
+
+.dark {
+  --surface: #111318;
+  --surface-container-lowest: #0c0e13;
+  --surface-container-low: #1a1b21;
+  --surface-container: #1e1f25;
+  --surface-container-high: #282a2f;
+  --surface-container-highest: #33353a;
+  --on-surface: #e2e2e9;
+  --on-surface-variant: #d1c5b2;
+  --outline: #9a8f7f;
+  --outline-variant: #4e4638;
+  --primary: #e6be68;
+  --on-primary: #402d00;
+  --secondary: #7bd0ff;
+  --on-secondary: #00354a;
+  --error: #ffb4ab;
+  --background: #111318;
+  --on-background: #e2e2e9;
+  --board-light: #2a2d35;
+  --board-dark: #1a1d24;
+  --accent: #7bd0ff;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: var(--background);
+  color: var(--on-background);
+}
+
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.piece-white {
+  color: #ffffff;
+  -webkit-text-stroke: 1.5px #14161b;
+  paint-order: stroke fill;
+}
+
+.piece-black {
+  color: #14161b;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.55);
+  paint-order: stroke fill;
+}

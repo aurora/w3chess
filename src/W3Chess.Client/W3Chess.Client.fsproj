@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <DisableImplicitFSharpCoreReference>false</DisableImplicitFSharpCoreReference>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="src/I18n.fs" />
+    <Compile Include="src/Theme.fs" />
+    <Compile Include="src/Api.fs" />
+    <Compile Include="src/Components/Board.fs" />
+    <Compile Include="src/Pages/Lobby.fs" />
+    <Compile Include="src/Pages/Game.fs" />
+    <Compile Include="src/Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\W3Chess.Domain\W3Chess.Domain.fsproj" />
+    <ProjectReference Include="..\W3Chess.Contracts\W3Chess.Contracts.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fable.Core" Version="5.6.1" />
+    <PackageReference Include="Fable.Browser.Dom" Version="2.20.0" />
+    <PackageReference Include="Fable.Browser.WebStorage" Version="1.3.0" />
+    <PackageReference Include="Feliz" Version="3.3.3" />
+    <PackageReference Include="Fable.Remoting.Client" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

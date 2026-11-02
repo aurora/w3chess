@@ -196,3 +196,8 @@ $RECYCLE.BIN/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+### Fable
+fable_modules/
+*.fs.js
+*.fs.js.map
