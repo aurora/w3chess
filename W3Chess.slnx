@@ -3,5 +3,6 @@
     <Project Path="src/W3Chess.Contracts/W3Chess.Contracts.fsproj" />
     <Project Path="src/W3Chess.Domain.Tests/W3Chess.Domain.Tests.fsproj" />
     <Project Path="src/W3Chess.Domain/W3Chess.Domain.fsproj" />
+    <Project Path="src/W3Chess.Server/W3Chess.Server.fsproj" />
   </Folder>
 </Solution>

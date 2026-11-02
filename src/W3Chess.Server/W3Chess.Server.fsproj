@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>W3Chess.Server</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Configuration.fs" />
+    <Compile Include="Storage/Models.fs" />
+    <Compile Include="Storage/Repositories.fs" />
+    <Compile Include="Services/TokenService.fs" />
+    <Compile Include="Services/EmailTemplates.fs" />
+    <Compile Include="Services/EmailService.fs" />
+    <Compile Include="Services/Notifier.fs" />
+    <Compile Include="Services/GameService.fs" />
+    <Compile Include="Services/ImportService.fs" />
+    <Compile Include="Api/ServerApi.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\W3Chess.Domain\W3Chess.Domain.fsproj" />
+    <ProjectReference Include="..\W3Chess.Contracts\W3Chess.Contracts.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.89" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageReference Include="MailKit" Version="4.18.2" />
+    <PackageReference Include="Giraffe" Version="8.3.0" />
+    <PackageReference Include="Fable.Remoting.Giraffe" Version="6.1.0" />
+  </ItemGroup>
+
+</Project>
