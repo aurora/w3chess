@@ -105,6 +105,22 @@ let GamePage (props: GameProps) =
         [| box props.GameId |]
     )
 
+    let subscriptionToken =
+        credentials
+        |> Option.map (fun value -> value.Token)
+        |> Option.orElse props.Token
+        |> Option.defaultValue ""
+
+    React.useEffect (
+        (fun () ->
+            if subscriptionToken = "" then
+                { new System.IDisposable with
+                    member _.Dispose() = () }
+            else
+                Api.subscribeGame props.GameId subscriptionToken (fun () -> Async.StartImmediate (reload ()))),
+        [| box props.GameId; box subscriptionToken |]
+    )
+
     let position = gameView |> Option.map (fun view -> Board.ofFen view.Fen)
 
     let legalMoves =

@@ -235,6 +235,24 @@ let requestDigest (request: DigestRequest) : Async<ActionResponse> =
         return decodeAction (jsonParse text)
     }
 
+[<Emit("new EventSource($0)")>]
+let private createEventSource (url: string) : obj = jsNative
+
+[<Emit("$0.onmessage = (e) => { $1(e.data); }")>]
+let private onEventSourceMessage (source: obj) (handler: string -> unit) : unit = jsNative
+
+[<Emit("$0.close()")>]
+let private closeEventSource (source: obj) : unit = jsNative
+
+/// Subscribes to live updates for a game. The token is the one from the email
+/// link (or the stored credentials) and is validated by the server.
+let subscribeGame (gameId: string) (token: string) (onUpdate: unit -> unit) : System.IDisposable =
+    let source = createEventSource (sprintf "/api/game/%s/events?token=%s" gameId token)
+    onEventSourceMessage source (fun _ -> onUpdate ())
+
+    { new System.IDisposable with
+        member _.Dispose() = closeEventSource source }
+
 let private storageKey (gameId: string) = "w3chess.credentials." + gameId
 
 let saveCredentials (credentials: PlayerCredentials) =
