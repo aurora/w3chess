@@ -50,7 +50,7 @@ docs/adr/                # Architecture Decision Records
 - [x] Notation: UCI, SAN (disambiguation, check/mate markers), PGN
 - [x] Tests: `perft` (start, Kiwipete, an en-passant/promotion position) and
       targeted rule tests — green
-- [ ] Legacy text-file importer (`LegacyImport.fs`) with replay validation
+- [x] Legacy text-file importer (`LegacyImport.fs`) with replay validation
 
 ### Server (`W3Chess.Server`)
 - [ ] Kestrel host, configuration, DI

@@ -10,6 +10,7 @@
     <Compile Include="MoveGen.fs" />
     <Compile Include="Rules.fs" />
     <Compile Include="Notation.fs" />
+    <Compile Include="LegacyImport.fs" />
   </ItemGroup>
 
 </Project>
