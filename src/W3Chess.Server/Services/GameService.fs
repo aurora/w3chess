@@ -625,6 +625,28 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
 
                     gameEvents.Publish(request.GameId, "updated")
 
+                    let players = GamePlayerRepository.listByGame connection request.GameId
+
+                    match otherPlayer players gamePlayer.PlayerId with
+                    | Some opponentGamePlayer ->
+                        match PlayerRepository.findById connection opponentGamePlayer.PlayerId with
+                        | Some opponentPlayer ->
+                            let opponentToken =
+                                TokenService.create settings.TokenSecret request.GameId opponentPlayer.Id
+
+                            let subject, body =
+                                EmailTemplates.drawOffer
+                                    opponentPlayer.Language
+                                    settings.PublicBaseUrl
+                                    request.GameId
+                                    opponentToken
+                                    opponentPlayer.Nickname
+                                    (legacyBoardOf game.CurrentFen)
+
+                            do! sendMail opponentPlayer.Email subject body
+                        | None -> ()
+                    | None -> ()
+
                     return { Ok = true; Error = None }
         }
 

@@ -290,6 +290,10 @@ let ``a draw offer can be accepted by the opponent but not the offerer`` () =
             let! view = service.GetGame alice.GameId
             Assert.True(view.Value.DrawOfferPending)
             Assert.Equal(Some alice.PlayerId, view.Value.DrawOfferBy)
+            Assert.True(
+                mails |> Seq.exists (fun mail -> mail.To = "bob@example.com" && mail.Subject.Contains "Draw offer"),
+                sprintf "expected a draw offer mail for Bob, got %A" mails
+            )
 
             let! self =
                 service.AcceptDraw

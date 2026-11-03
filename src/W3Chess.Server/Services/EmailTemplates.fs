@@ -155,6 +155,30 @@ module EmailTemplates =
 
         subject, body
 
+    let drawOffer lang baseUrl gameId token opponentNick board =
+        let subject =
+            t lang
+                (sprintf "Remisangebot (%s)" gameId)
+                (sprintf "Draw offer (%s)" gameId)
+
+        let body =
+            String.concat
+                "\n"
+                [ t lang (sprintf "Hallo %s," opponentNick) (sprintf "Hello %s," opponentNick)
+                  ""
+                  t
+                      lang
+                      "Dein Gegner bietet Remis an. Nimm das Angebot auf der Partieseite an."
+                      "Your opponent has offered a draw. Accept the offer on the game page."
+                  ""
+                  intro lang gameId
+                  ""
+                  renderBoard board false
+                  ""
+                  linkBlock lang (link baseUrl gameId token) ]
+
+        subject, body
+
     let moveCopy lang baseUrl gameId token lastMove board =
         let subject = t lang (sprintf "Zug gesendet (%s)" gameId) (sprintf "Move sent (%s)" gameId)
 
