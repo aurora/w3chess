@@ -149,3 +149,9 @@ docs/adr/                # Architecture Decision Records
   a single-use login link that lands back on the game (`#/auth?token=…&
   next=game/<id>`). Expired and used login tokens are purged daily by the
   retention loop. Verified end to end in a browser.
+- 2026-11-03: Playtest polish: raw errors (server messages, HTTP, network)
+  are mapped to the UI language with an English fallback for unknown text;
+  "Remis vorschlagen" and "Partie aufgeben" are disabled while the game is
+  not active or a draw offer is pending; the game page retries transient
+  failures of the initial load and refreshes when the tab becomes visible
+  again, so a suspended tab recovers instead of timing out.
