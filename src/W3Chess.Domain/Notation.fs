@@ -106,7 +106,18 @@ module Notation =
     let toRecord (position: Position) (move: Move) : MoveRecord =
         let next = MoveGen.applyMove position move
         let piece = position.Board.[move.From].Value
-        let captured = position.Board.[move.To]
+
+        let isEnPassant =
+            piece.Kind = Pawn
+            && Square.file move.From <> Square.file move.To
+            && position.Board.[move.To].IsNone
+
+        let captured =
+            if isEnPassant then
+                position.Board.[Square.create (Square.file move.To) (Square.rank move.From)]
+            else
+                position.Board.[move.To]
+
         let check = Rules.inCheck next next.SideToMove
         let checkmate = check && List.isEmpty (MoveGen.legalMoves next)
 

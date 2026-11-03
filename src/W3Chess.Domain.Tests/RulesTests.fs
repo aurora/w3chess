@@ -62,6 +62,20 @@ let ``en passant capture is generated`` () =
     Assert.True(after.Board.[Square.create 5 5].IsSome, "the white pawn must stand on f6")
 
 [<Fact>]
+let ``en passant capture records the captured pawn`` () =
+    let position =
+        Board.ofFen "rnbqkbnr/ppppp1pp/8/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"
+
+    let move =
+        MoveGen.legalMoves position
+        |> List.find (fun m -> m.From = Square.create 4 4 && m.To = Square.create 5 5)
+
+    let record = Notation.toRecord position move
+
+    Assert.Equal(Some { Color = Color.Black; Kind = Pawn }, record.Captured)
+    Assert.Equal("exf6", record.San)
+
+[<Fact>]
 let ``pawn promotion offers four pieces`` () =
     let position = Board.ofFen "8/P7/8/8/8/8/8/K6k w - - 0 1"
 
