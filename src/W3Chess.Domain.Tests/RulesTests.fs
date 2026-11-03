@@ -12,6 +12,15 @@ let private applyMoves (moves: string list) =
             MoveGen.applyMove position move)
         Board.startPosition
 
+let private positionsOf (start: Position) (moves: string list) =
+    moves
+    |> List.scan
+        (fun position uci ->
+            let move = Notation.ofUci uci |> Option.get
+            Assert.True(MoveGen.isLegalMove position move, $"Expected {uci} to be legal in {Board.toFen position}")
+            MoveGen.applyMove position move)
+        start
+
 [<Fact>]
 let ``initial position has twenty legal moves`` () =
     Assert.Equal(20, MoveGen.legalMoves Board.startPosition |> List.length)
@@ -112,3 +121,42 @@ let ``fen round trips`` () =
 
     for fen in fens do
         Assert.Equal(fen, Board.toFen (Board.ofFen fen))
+
+[<Fact>]
+let ``threefold repetition is detected`` () =
+    let history =
+        positionsOf
+            Board.startPosition
+            [ "g1f3"; "g8f6"; "f3g1"; "f6g8"; "g1f3"; "g8f6"; "f3g1"; "f6g8" ]
+
+    Assert.True(Rules.isThreefoldRepetition history)
+
+[<Fact>]
+let ``a position seen twice is not a repetition draw`` () =
+    let history =
+        positionsOf Board.startPosition [ "g1f3"; "g8f6"; "f3g1"; "f6g8" ]
+
+    Assert.False(Rules.isThreefoldRepetition history)
+
+[<Fact>]
+let ``different castling rights are not the same position`` () =
+    let before = Board.ofFen "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
+
+    let after =
+        positionsOf before [ "a1b1"; "a8b8"; "b1a1"; "b8a8" ]
+        |> List.last
+
+    Assert.NotEqual<string>(Rules.repetitionKey before, Rules.repetitionKey after)
+
+[<Fact>]
+let ``an en passant capture possibility changes the position identity`` () =
+    // After a double push no enemy pawn sits next to the target: the dead en
+    // passant square is normalised away and both keys are equal.
+    let withDeadEp = Board.ofFen "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+    let withoutEp = Board.ofFen "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+    Assert.Equal<string>(Rules.repetitionKey withDeadEp, Rules.repetitionKey withoutEp)
+
+    // A real en passant possibility (pawn can capture d6) is part of the key.
+    let capturable = Board.ofFen "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3"
+    let without = Board.ofFen "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 3"
+    Assert.NotEqual<string>(Rules.repetitionKey capturable, Rules.repetitionKey without)
