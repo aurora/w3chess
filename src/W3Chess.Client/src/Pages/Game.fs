@@ -119,7 +119,7 @@ let GamePage (props: GameProps) =
                     setError (Some(sprintf "%s: %s" t.Error ex.Message))
             }
             |> Async.StartImmediate),
-        [| box props.GameId |]
+        [| box props.GameId; box props.Token |]
     )
 
     let subscriptionToken =
