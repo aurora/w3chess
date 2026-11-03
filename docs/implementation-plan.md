@@ -118,3 +118,20 @@ docs/adr/                # Architecture Decision Records
   the per-game token; lobby prefills from the account and the header offers
   login/logout. `Auth:RequireAccount` defaults to false. Verified end to end
   (request login → mail token → session → create game → session move).
+- 2026-11-03: Bug-fix round from playtesting, verified end to end in a browser
+  (headless Chromium against a running stack): joining a game created as Black
+  assigned both players Black (joiner colour now derives from the creator row);
+  en passant captures are recorded in `MoveRecord`; draw offers work for
+  session players and the offering player sees a waiting notice instead of the
+  accept button (`GameView.DrawOfferBy`); the email-link token overrides
+  credentials stored for the same game, so an opponent can take their seat in a
+  browser that was used before; only the player on turn can interact with the
+  board and a staged move is previewed on the board before confirmation;
+  `ValidateSession` resolves an account session into game credentials; a
+  missing game shows an explicit error; API calls abort after 15 s so a hung
+  request surfaces as an error instead of an eternal "Loading".
+- 2026-11-03: A draw offer now also emails the opponent (template EN/DE);
+  previously only resign, moves and the game end triggered mails.
+- 2026-11-03: Open follow-up: `GameRetentionDays` and the matching repository
+  queries exist but nothing schedules the cleanup yet. MailDev 3.0.0 ships a
+  web UI that cannot reach its own API, so `scripts/dev.sh` pins `maildev@2`.
