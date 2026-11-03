@@ -13,6 +13,7 @@ module ServerApi =
           JoinGame = fun request -> gameService.JoinGame request
           GetGame = fun gameId -> gameService.GetGame gameId
           ValidateToken = fun gameId token -> gameService.ValidateToken(gameId, token)
+          ValidateSession = fun gameId session -> gameService.ValidateSession(gameId, session)
           SubmitMove = fun request -> gameService.SubmitMove request
           Resign = fun request -> gameService.Resign request
           OfferDraw = fun request -> gameService.OfferDraw request

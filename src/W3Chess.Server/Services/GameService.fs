@@ -341,6 +341,23 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                           Color = colorOfChar gamePlayer.Color })
         }
 
+    /// Resolves an account session into this game's player, mirroring
+    /// `ValidateToken` for logged-in players.
+    member _.ValidateSession(gameId: string, session: string) : Async<PlayerCredentials option> =
+        async {
+            use connection = connect ()
+
+            return
+                accountOf connection (Some session)
+                |> Option.bind (fun account ->
+                    GamePlayerRepository.findByGameAndEmail connection gameId account.Email)
+                |> Option.map (fun gamePlayer ->
+                    { GameId = gameId
+                      PlayerId = gamePlayer.PlayerId
+                      Token = ""
+                      Color = colorOfChar gamePlayer.Color })
+        }
+
     member _.ListOpenGames() : Async<OpenGame[]> =
         async {
             use connection = connect ()

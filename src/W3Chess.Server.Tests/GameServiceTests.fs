@@ -370,6 +370,51 @@ let ``a session player can offer a draw`` () =
     )
 
 [<Fact>]
+let ``a session player resolves to their game credentials`` () =
+    run (
+        async {
+            let settings = newSettings ()
+            migrate settings
+            let service = makeService settings (ResizeArray<Mail>())
+
+            let alice =
+                service.CreateGame createOpenRequest
+                |> Async.RunSynchronously
+                |> unwrap
+
+            let bob =
+                service.JoinGame
+                    { GameId = alice.GameId
+                      Nickname = "Bob"
+                      Email = "bob@example.com"
+                      Message = None
+                      Language = "en"; Session = None }
+                |> Async.RunSynchronously
+                |> unwrap
+
+            use connection = Db.connect settings.DatabasePath
+
+            for playerId, email, expectedColor in
+                [ alice.PlayerId, "alice@example.com", Color.White
+                  bob.PlayerId, "bob@example.com", Color.Black ] do
+                AccountRepository.insert
+                    connection
+                    { Id = playerId
+                      Email = email
+                      Nickname = email
+                      Language = "en"
+                      CreatedAt = Db.nowIso () }
+
+                let session = SessionService.create settings.TokenSecret playerId (TimeSpan.FromHours 1.0)
+                let! resolved = service.ValidateSession(alice.GameId, session)
+
+                Assert.Equal(Some alice.GameId, resolved |> Option.map (fun c -> c.GameId))
+                Assert.Equal(Some playerId, resolved |> Option.map (fun c -> c.PlayerId))
+                Assert.Equal(Some expectedColor, resolved |> Option.map (fun c -> c.Color))
+        }
+    )
+
+[<Fact>]
 let ``imports a legacy game file`` () =
     let settings = newSettings ()
 

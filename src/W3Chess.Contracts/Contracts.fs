@@ -120,6 +120,7 @@ type IW3ChessApi =
       JoinGame: JoinGameRequest -> Async<Result<PlayerCredentials, string>>
       GetGame: string -> Async<GameView option>
       ValidateToken: string -> string -> Async<PlayerCredentials option>
+      ValidateSession: string -> string -> Async<PlayerCredentials option>
       SubmitMove: SubmitMoveRequest -> Async<ActionResponse>
       Resign: ActionRequest -> Async<ActionResponse>
       OfferDraw: ActionRequest -> Async<ActionResponse>

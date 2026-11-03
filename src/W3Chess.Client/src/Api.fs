@@ -237,6 +237,13 @@ let validateToken (gameId: string) (token: string) : Async<PlayerCredentials opt
         return if isNull json then None else Some(decodeCredentials json)
     }
 
+let validateSession (gameId: string) (session: string) : Async<PlayerCredentials option> =
+    async {
+        let! text = post "ValidateSession" [| box gameId; box session |]
+        let json = jsonParse text
+        return if isNull json then None else Some(decodeCredentials json)
+    }
+
 let submitMove (request: SubmitMoveRequest) : Async<ActionResponse> =
     async {
         let body =
