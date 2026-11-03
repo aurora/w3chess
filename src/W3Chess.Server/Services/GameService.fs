@@ -468,11 +468,28 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                         let opponent = otherPlayer players request.PlayerId
                         let now = Db.nowIso ()
 
+                        // Replay the game from the initial FEN through every
+                        // stored move plus the new one; repetition detection
+                        // needs the positions of the whole game.
+                        let storedMoves = MoveRepository.listByGame connection request.GameId
+
+                        let history =
+                            storedMoves
+                            |> List.scan
+                                (fun position stored ->
+                                    match Notation.ofUci stored.Uci with
+                                    | Some storedMove -> MoveGen.applyMove position storedMove
+                                    | None -> position)
+                                (Board.ofFen game.InitialFen)
+
+                        let history = history @ [ next ]
+
                         let finishedResult =
                             match Rules.status next with
                             | Rules.Checkmate -> Some(if gamePlayer.Color = "w" then "1-0" else "0-1")
                             | Rules.Stalemate
                             | Rules.Draw _ -> Some "1/2-1/2"
+                            | _ when Rules.isThreefoldRepetition history -> Some "1/2-1/2"
                             | _ -> None
 
                         MoveRepository.insert

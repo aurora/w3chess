@@ -419,6 +419,61 @@ let ``a session player resolves to their game credentials`` () =
     )
 
 [<Fact>]
+let ``threefold repetition ends the game in a draw`` () =
+    run (
+        async {
+            let settings = newSettings ()
+            migrate settings
+            let mails = ResizeArray<Mail>()
+            let service = makeService settings mails
+
+            let alice =
+                service.CreateGame createOpenRequest
+                |> Async.RunSynchronously
+                |> unwrap
+
+            let bob =
+                service.JoinGame
+                    { GameId = alice.GameId
+                      Nickname = "Bob"
+                      Email = "bob@example.com"
+                      Message = None
+                      Language = "en"; Session = None }
+                |> Async.RunSynchronously
+                |> unwrap
+
+            // 1.Nf3 Nf6 2.Ng1 Ng8 3.Nf3 Nf6 4.Ng1 Ng8 brings the start
+            // position back for the third time.
+            let plies =
+                [ alice, 6, 21
+                  bob, 62, 45
+                  alice, 21, 6
+                  bob, 45, 62
+                  alice, 6, 21
+                  bob, 62, 45
+                  alice, 21, 6
+                  bob, 45, 62 ]
+
+            for credentials, fromSquare, toSquare in plies do
+                let! response =
+                    service.SubmitMove
+                        { GameId = alice.GameId
+                          PlayerId = credentials.PlayerId
+                          Token = credentials.Token
+                          FromSquare = fromSquare
+                          ToSquare = toSquare
+                          Promotion = None
+                          Message = None; Session = None }
+
+                Assert.True(response.Ok, sprintf "%A" response.Error)
+
+            let! finished = service.GetGame alice.GameId
+            Assert.Equal(GameStatus.Finished, finished.Value.Status)
+            Assert.Equal(Some "1/2-1/2", finished.Value.Result)
+        }
+    )
+
+[<Fact>]
 let ``imports a legacy game file`` () =
     let settings = newSettings ()
 
