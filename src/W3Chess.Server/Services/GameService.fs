@@ -246,7 +246,14 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                           Language = request.Language
                           CreatedAt = now }
 
-                    let color = Color.opposite (colorOfChar game.SideToMove)
+                    // The joiner takes the colour opposite to the creator, who is
+                    // the only player of a waiting game. Side-to-move of a fresh
+                    // game is always White regardless of the colours chosen.
+                    let color =
+                        GamePlayerRepository.listByGame connection game.Id
+                        |> List.tryHead
+                        |> Option.map (fun gp -> Color.opposite (colorOfChar gp.Color))
+                        |> Option.defaultValue Color.White
 
                     GamePlayerRepository.insert
                         connection

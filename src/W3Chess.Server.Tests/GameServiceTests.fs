@@ -146,6 +146,54 @@ let ``create an open game, join, and exchange moves`` () =
     )
 
 [<Fact>]
+let ``joining a game created as black assigns white to the joiner`` () =
+    run (
+        async {
+            let settings = newSettings ()
+            migrate settings
+            let mails = ResizeArray<Mail>()
+            let service = makeService settings mails
+
+            let alice =
+                service.CreateGame { createOpenRequest with ColorChoice = ColorChoice.AsBlack }
+                |> Async.RunSynchronously
+                |> unwrap
+
+            Assert.Equal(Color.Black, alice.Color)
+
+            let bob =
+                service.JoinGame
+                    { GameId = alice.GameId
+                      Nickname = "Bob"
+                      Email = "bob@example.com"
+                      Message = None
+                      Language = "en"; Session = None }
+                |> Async.RunSynchronously
+                |> unwrap
+
+            Assert.Equal(Color.White, bob.Color)
+
+            let! view = service.GetGame alice.GameId
+            Assert.Equal(Some "Bob", view.Value.White |> Option.map (fun p -> p.Nickname))
+            Assert.Equal(Some "Alice", view.Value.Black |> Option.map (fun p -> p.Nickname))
+            Assert.Equal(Color.White, view.Value.SideToMove)
+
+            // White (the joiner) opens the game.
+            let! firstMove =
+                service.SubmitMove
+                    { GameId = alice.GameId
+                      PlayerId = bob.PlayerId
+                      Token = bob.Token
+                      FromSquare = Square.create 4 1
+                      ToSquare = Square.create 4 3
+                      Promotion = None
+                      Message = None; Session = None }
+
+            Assert.True(firstMove.Ok, sprintf "%A" firstMove.Error)
+        }
+    )
+
+[<Fact>]
 let ``create a game with a named opponent sends an invitation`` () =
     run (
         async {
