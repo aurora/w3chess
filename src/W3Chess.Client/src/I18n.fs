@@ -64,7 +64,18 @@ type T =
       CheckEmail: string
       Account: string
       YourGames: string
-      LogInFirst: string }
+      LogInFirst: string
+      ErrTimeout: string
+      ErrNetwork: string
+      ErrNotYourTurn: string
+      ErrNotActive: string
+      ErrIllegalMove: string
+      ErrNotJoinable: string
+      ErrNotParticipant: string
+      ErrNoDrawOffer: string
+      ErrLoginLink: string
+      ErrEmailRequired: string
+      ErrNicknameRequired: string }
 
 let private en: T =
     { AppName = "W3Chess"
@@ -126,7 +137,18 @@ let private en: T =
       CheckEmail = "We sent you a login link by email."
       Account = "Account"
       YourGames = "Your games"
-      LogInFirst = "Log in to see your account and your games." }
+      LogInFirst = "Log in to see your account and your games."
+      ErrTimeout = "The server did not respond in time. Please try again."
+      ErrNetwork = "The connection to the server failed."
+      ErrNotYourTurn = "It is not your turn."
+      ErrNotActive = "The game is not active."
+      ErrIllegalMove = "That move is not legal."
+      ErrNotJoinable = "This game is not open for joining."
+      ErrNotParticipant = "You are not a participant of this game."
+      ErrNoDrawOffer = "There is no draw offer to accept."
+      ErrLoginLink = "This login link is invalid, expired or has already been used."
+      ErrEmailRequired = "Please enter a valid email address."
+      ErrNicknameRequired = "Please enter a nickname." }
 
 let private de: T =
     { AppName = "W3Chess"
@@ -188,9 +210,46 @@ let private de: T =
       CheckEmail = "Wir haben dir einen Anmelde-Link per E-Mail geschickt."
       Account = "Konto"
       YourGames = "Deine Partien"
-      LogInFirst = "Melde dich an, um dein Konto und deine Partien zu sehen." }
+      LogInFirst = "Melde dich an, um dein Konto und deine Partien zu sehen."
+      ErrTimeout = "Der Server hat nicht rechtzeitig geantwortet. Bitte versuche es erneut."
+      ErrNetwork = "Die Verbindung zum Server ist fehlgeschlagen."
+      ErrNotYourTurn = "Du bist nicht am Zug."
+      ErrNotActive = "Die Partie ist nicht aktiv."
+      ErrIllegalMove = "Dieser Zug ist nicht regelkonform."
+      ErrNotJoinable = "Diese Partie ist nicht mehr offen zum Beitritt."
+      ErrNotParticipant = "Du nimmst nicht an dieser Partie teil."
+      ErrNoDrawOffer = "Es liegt kein Remis-Angebot zum Annehmen vor."
+      ErrLoginLink = "Dieser Anmelde-Link ist ungültig, abgelaufen oder wurde bereits verwendet."
+      ErrEmailRequired = "Bitte gib eine gültige E-Mail-Adresse ein."
+      ErrNicknameRequired = "Bitte gib einen Spitznamen ein." }
 
 let ofLang lang = if lang = De then de else en
+
+/// True for failures worth retrying automatically: the request never reached
+/// the server or the answer did not arrive in time.
+let isTransient (message: string) : bool =
+    let lower = message.ToLowerInvariant()
+    lower.Contains("timed out") || lower.Contains("abort") || lower.Contains("failed to fetch")
+
+/// Maps a raw error message (server text, HTTP or network failure) to the UI
+/// language. Unknown messages are shown unchanged.
+let ofError (t: T) (message: string) : string =
+    let contains (needle: string) =
+        message.ToLowerInvariant().Contains(needle.ToLowerInvariant())
+
+    if contains "timed out" || contains "abort" then t.ErrTimeout
+    elif contains "failed to fetch" || contains "networkerror" then t.ErrNetwork
+    elif contains "not your turn" then t.ErrNotYourTurn
+    elif contains "game is not active" then t.ErrNotActive
+    elif contains "illegal move" then t.ErrIllegalMove
+    elif contains "game not found" then t.GameNotFound
+    elif contains "not open for joining" then t.ErrNotJoinable
+    elif contains "not a player in this game" || contains "invalid access token" then t.ErrNotParticipant
+    elif contains "no draw offer" then t.ErrNoDrawOffer
+    elif contains "already been used" || contains "has expired" then t.ErrLoginLink
+    elif contains "valid email is required" then t.ErrEmailRequired
+    elif contains "nickname is required" then t.ErrNicknameRequired
+    else message
 
 let ofCode (code: string) =
     if not (isNull code) && code.ToLowerInvariant().StartsWith("de") then De else En

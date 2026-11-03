@@ -89,10 +89,10 @@ let Lobby (props: LobbyProps) =
                 | Ok credentials ->
                     Api.saveCredentials credentials
                     props.OnOpenGame credentials.GameId
-                | Error message -> setError (Some message)
+                | Error message -> setError (Some (I18n.ofError t message))
             with ex ->
                 setBusy false
-                setError (Some(sprintf "%s: %s" t.Error ex.Message))
+                setError (Some(sprintf "%s: %s" t.Error (I18n.ofError t ex.Message)))
         }
         |> Async.StartImmediate
 
@@ -117,10 +117,10 @@ let Lobby (props: LobbyProps) =
                 | Ok credentials ->
                     Api.saveCredentials credentials
                     props.OnOpenGame credentials.GameId
-                | Error message -> setError (Some message)
+                | Error message -> setError (Some (I18n.ofError t message))
             with ex ->
                 setBusy false
-                setError (Some(sprintf "%s: %s" t.Error ex.Message))
+                setError (Some(sprintf "%s: %s" t.Error (I18n.ofError t ex.Message)))
         }
         |> Async.StartImmediate
 
@@ -138,10 +138,10 @@ let Lobby (props: LobbyProps) =
 
                 setBusy false
 
-                if response.Ok then setNotice (Some t.DigestSent) else setError response.Error
+                if response.Ok then setNotice (Some t.DigestSent) else setError (response.Error |> Option.map (I18n.ofError t))
             with ex ->
                 setBusy false
-                setError (Some(sprintf "%s: %s" t.Error ex.Message))
+                setError (Some(sprintf "%s: %s" t.Error (I18n.ofError t ex.Message)))
         }
         |> Async.StartImmediate
 
@@ -159,7 +159,7 @@ let Lobby (props: LobbyProps) =
                 setBusy false
             with ex ->
                 setBusy false
-                setError (Some(sprintf "%s: %s" t.Error ex.Message))
+                setError (Some(sprintf "%s: %s" t.Error (I18n.ofError t ex.Message)))
         }
         |> Async.StartImmediate
 

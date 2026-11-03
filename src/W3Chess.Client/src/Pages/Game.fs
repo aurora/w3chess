@@ -1,5 +1,7 @@
 module W3Chess.Client.Pages.Game
 
+open Browser.Dom
+open Browser.Types
 open Feliz
 open W3Chess.Domain
 open W3Chess.Contracts
@@ -83,6 +85,16 @@ let GamePage (props: GameProps) =
             view.Status = GameStatus.Active && view.SideToMove = identity.Color
         | _ -> false
 
+    let actionsAllowed =
+        match gameView with
+        | Some view -> view.Status = GameStatus.Active
+        | None -> false
+
+    let drawOfferPending =
+        match gameView with
+        | Some view -> view.DrawOfferPending
+        | None -> false
+
     let reload () =
         async {
             try
@@ -92,37 +104,57 @@ let GamePage (props: GameProps) =
                 | Some view -> setGameView (Some view)
                 | None -> setError (Some t.GameNotFound)
             with ex ->
-                setError (Some(sprintf "%s: %s" t.Error ex.Message))
+                setError (Some(sprintf "%s: %s" t.Error (I18n.ofError t ex.Message)))
         }
 
     React.useEffect (
         (fun () ->
-            async {
-                try
-                    // A token from the email link proves the player identity and
-                    // wins over credentials saved for this game in the browser.
-                    let! fromToken =
-                        match props.Token with
-                        | Some token -> Api.validateToken props.GameId token
-                        | None -> async.Return None
+            let rec attempt remaining =
+                async {
+                    try
+                        // A token from the email link proves the player identity and
+                        // wins over credentials saved for this game in the browser.
+                        let! fromToken =
+                            match props.Token with
+                            | Some token -> Api.validateToken props.GameId token
+                            | None -> async.Return None
 
-                    match fromToken with
-                    | Some credentials ->
-                        Api.saveCredentials credentials
-                        setCredentials (Some credentials)
-                    | None when props.Token.IsSome -> setError (Some t.Error)
-                    | None ->
-                        match Api.loadCredentials props.GameId with
-                        | Some credentials -> setCredentials (Some credentials)
-                        | None -> ()
+                        match fromToken with
+                        | Some credentials ->
+                            Api.saveCredentials credentials
+                            setCredentials (Some credentials)
+                        | None when props.Token.IsSome -> setError (Some t.Error)
+                        | None ->
+                            match Api.loadCredentials props.GameId with
+                            | Some credentials -> setCredentials (Some credentials)
+                            | None -> ()
 
-                    let! _ = reload ()
-                    ()
-                with ex ->
-                    setError (Some(sprintf "%s: %s" t.Error ex.Message))
-            }
-            |> Async.StartImmediate),
+                        let! _ = reload ()
+                        ()
+                    with ex ->
+                        if remaining > 0 && I18n.isTransient ex.Message then
+                            // A frozen tab or a busy dev proxy can swallow a
+                            // request; retry before giving up.
+                            do! Async.Sleep 1500
+                            return! attempt (remaining - 1)
+                        else
+                            setError (Some(sprintf "%s: %s" t.Error (I18n.ofError t ex.Message)))
+                }
+
+            attempt 2 |> Async.StartImmediate),
         [| box props.GameId; box props.Token |]
+    )
+
+    // When the tab becomes visible again, refresh: a suspended tab misses SSE
+    // pokes and its in-flight requests may have timed out meanwhile.
+    React.useEffect (
+        (fun () ->
+            let handler (_: Event) =
+                if document.visibilityState = "visible" then
+                    Async.StartImmediate (reload ())
+
+            window.addEventListener ("visibilitychange", handler)),
+        [| box props.GameId |]
     )
 
     let subscriptionToken =
@@ -225,11 +257,11 @@ let GamePage (props: GameProps) =
                         let! _ = reload ()
                         ()
                     else
-                        setError response.Error
+                        setError (response.Error |> Option.map (I18n.ofError t))
                         setStaged None
                 with ex ->
                     setBusy false
-                    setError (Some(sprintf "%s: %s" t.Error ex.Message))
+                    setError (Some(sprintf "%s: %s" t.Error (I18n.ofError t ex.Message)))
         }
         |> Async.StartImmediate
 
@@ -298,10 +330,10 @@ let GamePage (props: GameProps) =
                         let! _ = reload ()
                         ()
                     else
-                        setError response.Error
+                        setError (response.Error |> Option.map (I18n.ofError t))
                 with ex ->
                     setBusy false
-                    setError (Some(sprintf "%s: %s" t.Error ex.Message))
+                    setError (Some(sprintf "%s: %s" t.Error (I18n.ofError t ex.Message)))
         }
         |> Async.StartImmediate
 
@@ -652,8 +684,13 @@ let GamePage (props: GameProps) =
                                         prop.children [
                                             Html.button [
                                                 prop.type'.button
-                                                prop.className "h-11 rounded border border-outline-variant hover:border-primary text-sm"
-                                                prop.disabled (busy || identity.IsNone)
+                                                prop.className
+                                                    "h-11 rounded border border-outline-variant hover:border-primary text-sm disabled:opacity-50 disabled:hover:border-outline-variant"
+                                                prop.disabled
+                                                    (busy
+                                                     || identity.IsNone
+                                                     || not actionsAllowed
+                                                     || drawOfferPending)
                                                 prop.onClick (fun _ ->
                                                     setOfferedByMe true
 
@@ -667,8 +704,9 @@ let GamePage (props: GameProps) =
                                             ]
                                             Html.button [
                                                 prop.type'.button
-                                                prop.className "h-11 rounded border border-outline-variant hover:border-error text-sm text-error"
-                                                prop.disabled (busy || identity.IsNone)
+                                                prop.className
+                                                    "h-11 rounded border border-outline-variant hover:border-error text-sm text-error disabled:opacity-50 disabled:hover:border-outline-variant"
+                                                prop.disabled (busy || identity.IsNone || not actionsAllowed)
                                                 prop.onClick (fun _ ->
                                                     action (fun credentials ->
                                                         Api.resign

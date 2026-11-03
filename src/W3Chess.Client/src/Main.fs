@@ -145,9 +145,9 @@ let App () =
                             match authNext with
                             | Some target when target <> "" -> window.location.hash <- "#/" + target
                             | _ -> goLobby ()
-                        | Error message -> setAuthError (Some message)
+                        | Error message -> setAuthError (Some (I18n.ofError t message))
                     with ex ->
-                        setAuthError (Some ex.Message)
+                        setAuthError (Some (I18n.ofError t ex.Message))
                 }
                 |> Async.StartImmediate),
         [| box authToken; box authNext |]
