@@ -75,7 +75,9 @@ type T =
       ErrNoDrawOffer: string
       ErrLoginLink: string
       ErrEmailRequired: string
-      ErrNicknameRequired: string }
+      ErrNicknameRequired: string
+      RogueWorkerFound: string
+      RogueWorkerRemove: string }
 
 let private en: T =
     { AppName = "W3Chess"
@@ -148,7 +150,10 @@ let private en: T =
       ErrNoDrawOffer = "There is no draw offer to accept."
       ErrLoginLink = "This login link is invalid, expired or has already been used."
       ErrEmailRequired = "Please enter a valid email address."
-      ErrNicknameRequired = "Please enter a nickname." }
+      ErrNicknameRequired = "Please enter a nickname."
+      RogueWorkerFound =
+        "A service worker from another application is registered for this address and can block requests to the game."
+      RogueWorkerRemove = "Remove and reload" }
 
 let private de: T =
     { AppName = "W3Chess"
@@ -221,7 +226,10 @@ let private de: T =
       ErrNoDrawOffer = "Es liegt kein Remis-Angebot zum Annehmen vor."
       ErrLoginLink = "Dieser Anmelde-Link ist ungültig, abgelaufen oder wurde bereits verwendet."
       ErrEmailRequired = "Bitte gib eine gültige E-Mail-Adresse ein."
-      ErrNicknameRequired = "Bitte gib einen Spitznamen ein." }
+      ErrNicknameRequired = "Bitte gib einen Spitznamen ein."
+      RogueWorkerFound =
+        "Für diese Adresse ist ein Service Worker einer anderen Anwendung registriert. Er kann Anfragen an das Spiel blockieren."
+      RogueWorkerRemove = "Entfernen und neu laden" }
 
 let ofLang lang = if lang = De then de else en
 

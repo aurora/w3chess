@@ -88,6 +88,7 @@ let App () =
     let route, setRoute = React.useState (parseRoute window.location.hash)
     let account, setAccount = React.useState (Api.currentAccount ())
     let authError, setAuthError = React.useState (None: string option)
+    let rogueWorker, setRogueWorker = React.useState (false)
     let loginEmail, setLoginEmail = React.useState ("")
     let loginNotice, setLoginNotice = React.useState (false)
     let loginError, setLoginError = React.useState (None: string option)
@@ -97,6 +98,18 @@ let App () =
         (fun () ->
             let handler = fun (_: Browser.Types.Event) -> setRoute (parseRoute window.location.hash)
             window.addEventListener ("hashchange", handler)),
+        [||]
+    )
+
+    // W3Chess registers no service worker; one on this origin comes from
+    // another application and can swallow requests meant for the server.
+    React.useEffect (
+        (fun () ->
+            async {
+                let! count = ServiceWorker.countRegistered ()
+                if count > 0 then setRogueWorker true
+            }
+            |> Async.StartImmediate),
         [||]
     )
 
@@ -240,6 +253,30 @@ let App () =
     Html.div [
         prop.className "min-h-screen flex flex-col bg-background text-on-background"
         prop.children [
+            if rogueWorker then
+                Html.div [
+                    prop.className "border-b border-error bg-error/10 px-6 py-2"
+                    prop.children [
+                        Html.div [
+                            prop.className "max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-3 text-sm text-error"
+                            prop.children [
+                                Html.span [ prop.text t.RogueWorkerFound ]
+                                Html.button [
+                                    prop.type'.button
+                                    prop.className "px-3 py-1 rounded border border-error font-semibold hover:bg-error hover:text-on-error"
+                                    prop.onClick (fun _ ->
+                                        async {
+                                            do! ServiceWorker.unregisterAll ()
+                                            window.location.reload ()
+                                        }
+                                        |> Async.StartImmediate)
+                                    prop.text t.RogueWorkerRemove
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+
             Html.header [
                 prop.className "border-b border-outline-variant bg-surface-container-low"
                 prop.children [

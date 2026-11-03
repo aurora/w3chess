@@ -8,6 +8,7 @@
     <Compile Include="src/I18n.fs" />
     <Compile Include="src/Theme.fs" />
     <Compile Include="src/Api.fs" />
+    <Compile Include="src/ServiceWorker.fs" />
     <Compile Include="src/Components/Board.fs" />
     <Compile Include="src/Pages/Lobby.fs" />
     <Compile Include="src/Pages/Game.fs" />

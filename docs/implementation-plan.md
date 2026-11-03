@@ -155,3 +155,8 @@ docs/adr/                # Architecture Decision Records
   not active or a draw offer is pending; the game page retries transient
   failures of the initial load and refreshes when the tab becomes visible
   again, so a suspended tab recovers instead of timing out.
+- 2026-11-03: Rogue service worker guard: W3Chess registers no service
+  worker, so on start-up the client counts registrations for its origin and,
+  when one exists (left over from another application on the same address),
+  shows a banner offering to unregister it and reload. Verified with a
+  deliberately registered worker in a browser.
