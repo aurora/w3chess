@@ -143,3 +143,9 @@ docs/adr/                # Architecture Decision Records
   zero, the server deletes games that have not been updated within that
   window — once at startup and then once a day (`Retention` module). Zero
   days (the default) disables the cleanup; verified with backdated games.
+- 2026-11-03: Account features: a `#/account` page (identity, the games of
+  the account email, logout, reachable from the header) and login links in
+  game mails — when the recipient holds an account, every game mail appends
+  a single-use login link that lands back on the game (`#/auth?token=…&
+  next=game/<id>`). Expired and used login tokens are purged daily by the
+  retention loop. Verified end to end in a browser.
