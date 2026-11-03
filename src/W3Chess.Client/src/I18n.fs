@@ -51,6 +51,7 @@ type T =
       BackToLobby: string
       Loading: string
       Error: string
+      GameNotFound: string
       OpponentMessage: string
       Promotion: string
       DigestSent: string
@@ -109,6 +110,7 @@ let private en: T =
       BackToLobby = "Back to lobby"
       Loading = "Loading…"
       Error = "Something went wrong"
+      GameNotFound = "This game does not exist."
       OpponentMessage = "Opponent's message"
       Promotion = "Choose promotion"
       DigestSent = "Your games have been emailed to you."
@@ -167,6 +169,7 @@ let private de: T =
       BackToLobby = "Zurück zur Lobby"
       Loading = "Lädt…"
       Error = "Etwas ist schiefgelaufen"
+      GameNotFound = "Diese Partie existiert nicht."
       OpponentMessage = "Nachricht des Gegners"
       Promotion = "Umwandlung wählen"
       DigestSent = "Deine Partien wurden per E-Mail verschickt."

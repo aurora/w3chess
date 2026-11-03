@@ -87,7 +87,10 @@ let GamePage (props: GameProps) =
         async {
             try
                 let! view = Api.getGame props.GameId
-                setGameView view
+
+                match view with
+                | Some view -> setGameView (Some view)
+                | None -> setError (Some t.GameNotFound)
             with ex ->
                 setError (Some(sprintf "%s: %s" t.Error ex.Message))
         }
