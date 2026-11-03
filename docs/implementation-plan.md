@@ -132,11 +132,14 @@ docs/adr/                # Architecture Decision Records
   request surfaces as an error instead of an eternal "Loading".
 - 2026-11-03: A draw offer now also emails the opponent (template EN/DE);
   previously only resign, moves and the game end triggered mails.
-- 2026-11-03: Open follow-up: `GameRetentionDays` and the matching repository
-  queries exist but nothing schedules the cleanup yet. MailDev 3.0.0 ships a
+- 2026-11-03: Open follow-up: MailDev 3.0.0 ships a
   web UI that cannot reach its own API, so `scripts/dev.sh` pins `maildev@2`.
 - 2026-11-03: Threefold repetition (ADR 0010): the server replays the game
   from its initial FEN and finishes `1/2-1/2` when the position after a move
   occurs for the third time. Position identity follows FIDE 9.2 with a
   normalised en passant square (only counted when a capture is actually
   legal). Domain key/detection plus server adjudication are unit-tested.
+- 2026-11-03: Retention cleanup: when `GameRetentionDays` is greater than
+  zero, the server deletes games that have not been updated within that
+  window — once at startup and then once a day (`Retention` module). Zero
+  days (the default) disables the cleanup; verified with backdated games.
