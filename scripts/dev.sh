@@ -79,7 +79,8 @@ echo "==> Transpiling the Fable client"
 "$DOTNET" fable "$CLIENT_DIR"
 
 echo "==> Starting MailDev (SMTP :1025, web UI http://localhost:1080)"
-run_bg distrobox enter "$CONTAINER" -- bash -lc 'npx --yes maildev'
+# MailDev 3 ships a web UI that cannot reach its own API, so pin the working major.
+run_bg distrobox enter "$CONTAINER" -- bash -lc 'npx --yes maildev@2'
 
 echo "==> Starting the Kestrel server (http://localhost:5000)"
 run_bg "$DOTNET" run --project "$SERVER_PROJECT" --no-build
