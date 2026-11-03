@@ -51,6 +51,8 @@ let main args =
         let gameService = GameService(settings, notifier, gameEvents)
         let api = ServerApi.create gameService authService
 
+        Retention.startBackground settings (printfn "%s")
+
         let remoting =
             Remoting.createApi ()
             |> Remoting.withRouteBuilder ApiRoutes.build

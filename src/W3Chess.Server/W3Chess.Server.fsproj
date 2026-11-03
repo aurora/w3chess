@@ -18,6 +18,7 @@
     <Compile Include="Services/AuthService.fs" />
     <Compile Include="Services/GameService.fs" />
     <Compile Include="Services/ImportService.fs" />
+    <Compile Include="Services/Retention.fs" />
     <Compile Include="Api/ServerApi.fs" />
     <Compile Include="Api/EventStream.fs" />
     <Compile Include="Program.fs" />

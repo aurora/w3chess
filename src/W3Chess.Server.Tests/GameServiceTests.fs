@@ -474,6 +474,68 @@ let ``threefold repetition ends the game in a draw`` () =
     )
 
 [<Fact>]
+let ``retention deletes games not updated within the configured days`` () =
+    run (
+        async {
+            let settings = { newSettings () with GameRetentionDays = 30 }
+            migrate settings
+            let service = makeService settings (ResizeArray<Mail>())
+
+            let alice =
+                service.CreateGame
+                    { createOpenRequest with
+                        OpponentNickname = Some "Bob"
+                        OpponentEmail = Some "bob@example.com" }
+                |> Async.RunSynchronously
+                |> unwrap
+
+            // Backdate the game below the retention cutoff.
+            use connection = Db.connect settings.DatabasePath
+
+            connection.Execute(
+                "UPDATE games SET updated_at = @updatedAt WHERE id = @id",
+                {| updatedAt = Retention.cutoffIso 40; id = alice.GameId |}
+            )
+            |> ignore
+
+            let! deleted = Retention.cleanupExpired settings
+            Assert.Equal(1, deleted)
+
+            let! view = service.GetGame alice.GameId
+            Assert.True(view.IsNone)
+        }
+    )
+
+[<Fact>]
+let ``a retention of zero days deletes nothing`` () =
+    run (
+        async {
+            let settings = newSettings () // GameRetentionDays = 0
+            migrate settings
+            let service = makeService settings (ResizeArray<Mail>())
+
+            let alice =
+                service.CreateGame createOpenRequest
+                |> Async.RunSynchronously
+                |> unwrap
+
+            use connection = Db.connect settings.DatabasePath
+
+            connection.Execute(
+                "UPDATE games SET updated_at = @updatedAt WHERE id = @id",
+                {| updatedAt = Retention.cutoffIso 40; id = alice.GameId |}
+            )
+            |> ignore
+
+            let! deleted = Retention.cleanupExpired settings
+            Assert.Equal(0, deleted)
+
+            let! view = service.GetGame alice.GameId
+            Assert.True(view.IsSome)
+        }
+    )
+
+[<Fact>]
 let ``imports a legacy game file`` () =
     let settings = newSettings ()
 
