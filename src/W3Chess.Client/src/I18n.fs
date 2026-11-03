@@ -61,7 +61,10 @@ type T =
       Material: string
       Login: string
       Logout: string
-      CheckEmail: string }
+      CheckEmail: string
+      Account: string
+      YourGames: string
+      LogInFirst: string }
 
 let private en: T =
     { AppName = "W3Chess"
@@ -120,7 +123,10 @@ let private en: T =
       Material = "Material"
       Login = "Log in"
       Logout = "Log out"
-      CheckEmail = "We sent you a login link by email." }
+      CheckEmail = "We sent you a login link by email."
+      Account = "Account"
+      YourGames = "Your games"
+      LogInFirst = "Log in to see your account and your games." }
 
 let private de: T =
     { AppName = "W3Chess"
@@ -179,7 +185,10 @@ let private de: T =
       Material = "Material"
       Login = "Anmelden"
       Logout = "Abmelden"
-      CheckEmail = "Wir haben dir einen Anmelde-Link per E-Mail geschickt." }
+      CheckEmail = "Wir haben dir einen Anmelde-Link per E-Mail geschickt."
+      Account = "Konto"
+      YourGames = "Deine Partien"
+      LogInFirst = "Melde dich an, um dein Konto und deine Partien zu sehen." }
 
 let ofLang lang = if lang = De then de else en
 

@@ -13,7 +13,8 @@ open W3Chess.Client.Pages
 type Route =
     | Lobby
     | Game of gameId: string * token: string option
-    | Auth of token: string
+    | Auth of token: string * next: string option
+    | Account
 
 let private parseQueryParam (name: string) (query: string) =
     query.Split('&')
@@ -36,12 +37,14 @@ let private parseRoute (hash: string) : Route =
     | [| "game"; gameId |] -> Game(gameId, parseQueryParam "token" query)
     | [| "auth" |] ->
         match parseQueryParam "token" query with
-        | Some token -> Auth token
+        | Some token -> Auth(token, parseQueryParam "next" query)
         | None -> Lobby
+    | [| "account" |] -> Account
     | _ -> Lobby
 
 let private openGame (gameId: string) = window.location.hash <- "#/game/" + gameId
 let private goLobby () = window.location.hash <- "#/"
+let private goAccount () = window.location.hash <- "#/account"
 
 let private browserLanguage () : string =
     let language: obj = window?navigator?language
@@ -118,10 +121,10 @@ let App () =
         [||]
     )
 
-    let authToken =
+    let authToken, authNext =
         match route with
-        | Auth token -> token
-        | _ -> ""
+        | Auth(token, next) -> token, next
+        | _ -> "", None
 
     // Complete a magic-link login when the auth route carries a token.
     React.useEffect (
@@ -138,13 +141,16 @@ let App () =
                             Api.saveSession session
                             setAccount (Some session.Account)
                             setAuthError None
-                            goLobby ()
+
+                            match authNext with
+                            | Some target when target <> "" -> window.location.hash <- "#/" + target
+                            | _ -> goLobby ()
                         | Error message -> setAuthError (Some message)
                     with ex ->
                         setAuthError (Some ex.Message)
                 }
                 |> Async.StartImmediate),
-        [| box authToken |]
+        [| box authToken; box authNext |]
     )
 
     React.useEffect (
@@ -200,10 +206,7 @@ let App () =
             Html.div [
                 prop.className "flex items-center gap-2"
                 prop.children [
-                    Html.span [
-                        prop.className "text-sm text-on-surface-variant"
-                        prop.text value.Nickname
-                    ]
+                    navButton (route = Account) value.Nickname goAccount
                     navButton false t.Logout logout
                 ]
             ]
@@ -298,6 +301,13 @@ let App () =
                               Token = token
                               Lang = lang
                               OnBack = goLobby }
+                    | Account ->
+                        Account.AccountPage
+                            { Lang = lang
+                              OnOpenGame = openGame
+                              OnLogout = fun () ->
+                                  logout ()
+                                  goLobby () }
                     | Auth _ ->
                         Html.div [
                             prop.className

@@ -11,6 +11,7 @@
     <Compile Include="src/Components/Board.fs" />
     <Compile Include="src/Pages/Lobby.fs" />
     <Compile Include="src/Pages/Game.fs" />
+    <Compile Include="src/Pages/Account.fs" />
     <Compile Include="src/Main.fs" />
   </ItemGroup>
 
