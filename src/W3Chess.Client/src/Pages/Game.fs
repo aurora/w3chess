@@ -84,18 +84,21 @@ let GamePage (props: GameProps) =
         (fun () ->
             async {
                 try
-                    match Api.loadCredentials props.GameId with
-                    | Some credentials -> setCredentials (Some credentials)
-                    | None ->
+                    // A token from the email link proves the player identity and
+                    // wins over credentials saved for this game in the browser.
+                    let! fromToken =
                         match props.Token with
-                        | Some token ->
-                            let! validated = Api.validateToken props.GameId token
+                        | Some token -> Api.validateToken props.GameId token
+                        | None -> async.Return None
 
-                            match validated with
-                            | Some credentials ->
-                                Api.saveCredentials credentials
-                                setCredentials (Some credentials)
-                            | None -> setError (Some t.Error)
+                    match fromToken with
+                    | Some credentials ->
+                        Api.saveCredentials credentials
+                        setCredentials (Some credentials)
+                    | None when props.Token.IsSome -> setError (Some t.Error)
+                    | None ->
+                        match Api.loadCredentials props.GameId with
+                        | Some credentials -> setCredentials (Some credentials)
                         | None -> ()
 
                     let! _ = reload ()
