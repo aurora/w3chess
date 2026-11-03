@@ -67,7 +67,8 @@ type GameView =
       Fen: string
       Moves: MoveView[]
       Message: string option
-      DrawOfferPending: bool }
+      DrawOfferPending: bool
+      DrawOfferBy: string option }
 
 type OpenGame =
     { GameId: string

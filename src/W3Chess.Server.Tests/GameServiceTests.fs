@@ -255,6 +255,121 @@ let ``resigning finishes the game in favour of the opponent`` () =
     )
 
 [<Fact>]
+let ``a draw offer can be accepted by the opponent but not the offerer`` () =
+    run (
+        async {
+            let settings = newSettings ()
+            migrate settings
+            let mails = ResizeArray<Mail>()
+            let service = makeService settings mails
+
+            let alice =
+                service.CreateGame createOpenRequest
+                |> Async.RunSynchronously
+                |> unwrap
+
+            let bob =
+                service.JoinGame
+                    { GameId = alice.GameId
+                      Nickname = "Bob"
+                      Email = "bob@example.com"
+                      Message = None
+                      Language = "en"; Session = None }
+                |> Async.RunSynchronously
+                |> unwrap
+
+            let! offered =
+                service.OfferDraw
+                    { GameId = alice.GameId
+                      PlayerId = alice.PlayerId
+                      Token = alice.Token
+                      Message = None; Session = None }
+
+            Assert.True(offered.Ok, sprintf "%A" offered.Error)
+
+            let! view = service.GetGame alice.GameId
+            Assert.True(view.Value.DrawOfferPending)
+            Assert.Equal(Some alice.PlayerId, view.Value.DrawOfferBy)
+
+            let! self =
+                service.AcceptDraw
+                    { GameId = alice.GameId
+                      PlayerId = alice.PlayerId
+                      Token = alice.Token
+                      Message = None; Session = None }
+
+            Assert.False(self.Ok)
+
+            let! accepted =
+                service.AcceptDraw
+                    { GameId = bob.GameId
+                      PlayerId = bob.PlayerId
+                      Token = bob.Token
+                      Message = None; Session = None }
+
+            Assert.True(accepted.Ok, sprintf "%A" accepted.Error)
+
+            let! finished = service.GetGame alice.GameId
+            Assert.Equal(GameStatus.Finished, finished.Value.Status)
+            Assert.Equal(Some "1/2-1/2", finished.Value.Result)
+            Assert.Equal(None, finished.Value.DrawOfferBy)
+        }
+    )
+
+[<Fact>]
+let ``a session player can offer a draw`` () =
+    run (
+        async {
+            let settings = newSettings ()
+            migrate settings
+            let mails = ResizeArray<Mail>()
+            let service = makeService settings mails
+
+            let alice =
+                service.CreateGame createOpenRequest
+                |> Async.RunSynchronously
+                |> unwrap
+
+            let _ =
+                service.JoinGame
+                    { GameId = alice.GameId
+                      Nickname = "Bob"
+                      Email = "bob@example.com"
+                      Message = None
+                      Language = "en"; Session = None }
+                |> Async.RunSynchronously
+                |> unwrap
+
+            let accountId = Db.newId ()
+
+            use connection = Db.connect settings.DatabasePath
+
+            AccountRepository.insert
+                connection
+                { Id = accountId
+                  Email = "alice@example.com"
+                  Nickname = "Alice"
+                  Language = "en"
+                  CreatedAt = Db.nowIso () }
+
+            let session = SessionService.create settings.TokenSecret accountId (TimeSpan.FromHours 1.0)
+
+            let! offered =
+                service.OfferDraw
+                    { GameId = alice.GameId
+                      PlayerId = ""
+                      Token = ""
+                      Message = None; Session = Some session }
+
+            Assert.True(offered.Ok, sprintf "%A" offered.Error)
+
+            let! view = service.GetGame alice.GameId
+            Assert.True(view.Value.DrawOfferPending, "the offer must be stored for session players")
+            Assert.Equal(Some alice.PlayerId, view.Value.DrawOfferBy)
+        }
+    )
+
+[<Fact>]
 let ``imports a legacy game file`` () =
     let settings = newSettings ()
 

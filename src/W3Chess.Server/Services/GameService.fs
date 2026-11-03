@@ -83,7 +83,8 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
           Fen = game.CurrentFen
           Moves = moveViews
           Message = (if game.LastMessage = "" then None else Some game.LastMessage)
-          DrawOfferPending = game.DrawOfferBy <> "" }
+          DrawOfferPending = game.DrawOfferBy <> ""
+          DrawOfferBy = (if game.DrawOfferBy = "" then None else Some game.DrawOfferBy) }
 
     let otherPlayer (players: GamePlayerRow list) (playerId: string) =
         players |> List.tryFind (fun gp -> gp.PlayerId <> playerId)
@@ -592,7 +593,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
         async {
             match this.Authorise(request.GameId, request.PlayerId, request.Token, request.Session) with
             | Error message -> return { Ok = false; Error = Some message }
-            | Ok(connection, game, _) ->
+            | Ok(connection, game, gamePlayer) ->
                 use connection = connection
 
                 if game.Status <> "active" then
@@ -601,7 +602,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                     GameRepository.update
                         connection
                         { game with
-                            DrawOfferBy = request.PlayerId
+                            DrawOfferBy = gamePlayer.PlayerId
                             UpdatedAt = Db.nowIso()
                             LastMessage = (defaultArg request.Message game.LastMessage) }
 
@@ -614,12 +615,12 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
         async {
             match this.Authorise(request.GameId, request.PlayerId, request.Token, request.Session) with
             | Error message -> return { Ok = false; Error = Some message }
-            | Ok(connection, game, _) ->
+            | Ok(connection, game, gamePlayer) ->
                 use connection = connection
 
                 if game.Status <> "active" then
                     return { Ok = false; Error = Some "The game is not active" }
-                elif game.DrawOfferBy = "" || game.DrawOfferBy = request.PlayerId then
+                elif game.DrawOfferBy = "" || game.DrawOfferBy = gamePlayer.PlayerId then
                     return { Ok = false; Error = Some "There is no draw offer to accept" }
                 else
                     GameRepository.update

@@ -69,6 +69,7 @@ let GamePage (props: GameProps) =
     let error, setError = React.useState (None: string option)
     let busy, setBusy = React.useState (false)
     let orientation, setOrientation = React.useState (Color.White)
+    let offeredByMe, setOfferedByMe = React.useState (false)
 
     let reload () =
         async {
@@ -123,6 +124,15 @@ let GamePage (props: GameProps) =
         [| box props.GameId; box subscriptionKey |]
     )
 
+    // Forget a locally-flagged offer of this browser once none is pending.
+    React.useEffect (
+        (fun () ->
+            match gameView with
+            | Some view when not view.DrawOfferPending -> setOfferedByMe false
+            | _ -> ()),
+        [| box gameView |]
+    )
+
     let position = gameView |> Option.map (fun view -> Board.ofFen view.Fen)
 
     let legalMoves =
@@ -139,6 +149,14 @@ let GamePage (props: GameProps) =
             match Array.tryLast view.Moves with
             | Some move -> Some(move.FromSquare, move.ToSquare)
             | None -> None)
+
+    /// The pending offer was made from this browser or by this client's player.
+    let drawOfferIsMine =
+        match gameView with
+        | Some view ->
+            view.DrawOfferPending
+            && (offeredByMe || view.DrawOfferBy = (credentials |> Option.map (fun c -> c.PlayerId)))
+        | None -> false
 
     let submitMove (from: Square) (target: Square) (promotion: PieceKind option) =
         async {
@@ -578,6 +596,8 @@ let GamePage (props: GameProps) =
                                                 prop.className "h-11 rounded border border-outline-variant hover:border-primary text-sm"
                                                 prop.disabled (busy || (credentials.IsNone && session.IsNone))
                                                 prop.onClick (fun _ ->
+                                                    setOfferedByMe true
+
                                                     action (fun credentials ->
                                                         Api.offerDraw
                                                             { GameId = props.GameId
@@ -604,28 +624,35 @@ let GamePage (props: GameProps) =
 
                                 match gameView with
                                 | Some view when view.DrawOfferPending ->
-                                    yield
-                                        Html.div [
-                                            prop.className
-                                                "rounded border border-secondary text-secondary p-4 flex flex-col gap-3"
-                                            prop.children [
-                                                Html.span [ prop.className "text-sm"; prop.text t.DrawOffered ]
-                                                Html.button [
-                                                    prop.type'.button
-                                                    prop.className
-                                                        "h-11 rounded bg-secondary text-on-secondary font-semibold disabled:opacity-50"
-                                                    prop.disabled (busy || (credentials.IsNone && session.IsNone))
-                                                    prop.onClick (fun _ ->
-                                                        action (fun credentials ->
-                                                            Api.acceptDraw
-                                                                { GameId = props.GameId
-                                                                  PlayerId = credentials.PlayerId
-                                                                  Token = credentials.Token
-                                                                  Message = None; Session = session }))
-                                                    prop.text t.AcceptDraw
+                                    if drawOfferIsMine then
+                                        yield
+                                            Html.div [
+                                                prop.className "rounded border border-secondary text-secondary p-4 text-sm"
+                                                prop.text t.DrawOfferSent
+                                            ]
+                                    else
+                                        yield
+                                            Html.div [
+                                                prop.className
+                                                    "rounded border border-secondary text-secondary p-4 flex flex-col gap-3"
+                                                prop.children [
+                                                    Html.span [ prop.className "text-sm"; prop.text t.DrawOffered ]
+                                                    Html.button [
+                                                        prop.type'.button
+                                                        prop.className
+                                                            "h-11 rounded bg-secondary text-on-secondary font-semibold disabled:opacity-50"
+                                                        prop.disabled (busy || (credentials.IsNone && session.IsNone))
+                                                        prop.onClick (fun _ ->
+                                                            action (fun credentials ->
+                                                                Api.acceptDraw
+                                                                    { GameId = props.GameId
+                                                                      PlayerId = credentials.PlayerId
+                                                                      Token = credentials.Token
+                                                                      Message = None; Session = session }))
+                                                        prop.text t.AcceptDraw
+                                                    ]
                                                 ]
                                             ]
-                                        ]
                                 | _ -> ()
 
                                 // Moves

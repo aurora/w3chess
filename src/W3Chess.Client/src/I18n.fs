@@ -43,6 +43,7 @@ type T =
       OfferDraw: string
       AcceptDraw: string
       DrawOffered: string
+      DrawOfferSent: string
       FlipBoard: string
       CopyId: string
       Copied: string
@@ -100,6 +101,7 @@ let private en: T =
       OfferDraw = "Offer draw"
       AcceptDraw = "Accept draw"
       DrawOffered = "A draw has been offered."
+      DrawOfferSent = "You offered a draw and are waiting for your opponent's answer."
       FlipBoard = "Flip board"
       CopyId = "Copy game ID"
       Copied = "Copied!"
@@ -157,6 +159,7 @@ let private de: T =
       OfferDraw = "Remis vorschlagen"
       AcceptDraw = "Remis annehmen"
       DrawOffered = "Es liegt ein Remis-Angebot vor."
+      DrawOfferSent = "Du hast Remis vorgeschlagen und wartest auf die Antwort deines Gegners."
       FlipBoard = "Brett drehen"
       CopyId = "Spiele-ID kopieren"
       Copied = "Kopiert!"

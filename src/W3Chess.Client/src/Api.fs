@@ -110,7 +110,8 @@ let private decodeGameView (json: obj) : GameView =
       Fen = unbox json?Fen
       Moves = (unbox<obj[]> json?Moves) |> Array.map decodeMoveView
       Message = optValue json?Message
-      DrawOfferPending = unbox json?DrawOfferPending }
+      DrawOfferPending = unbox json?DrawOfferPending
+      DrawOfferBy = optValue json?DrawOfferBy }
 
 let private decodeOpenGame (json: obj) : OpenGame =
     { GameId = unbox json?GameId
