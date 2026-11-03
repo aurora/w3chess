@@ -10,8 +10,11 @@ open W3Chess.Contracts
 // decodes responses explicitly. This avoids Fable.SimpleJson's reflection-based
 // decoding, which misclassifies F# options and lists under Fable 5.
 
-[<Emit("fetch($0, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: $1 })")>]
-let private fetchPost (url: string) (body: string) : JS.Promise<obj> = jsNative
+[<Emit("fetch($0, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: $1, signal: $2 })")>]
+let private fetchPost (url: string) (body: string) (signal: obj) : JS.Promise<obj> = jsNative
+
+[<Emit("AbortSignal.timeout($0)")>]
+let private timeoutSignal (milliseconds: int) : obj = jsNative
 
 [<Emit("$0.text()")>]
 let private responseText (response: obj) : JS.Promise<string> = jsNative
@@ -32,13 +35,17 @@ let private post (name: string) (args: obj[]) : Async<string> =
     async {
         let url = "/api/IW3ChessApi/" + name
         let body = jsonStringify (box args)
-        let! response = fetchPost url body |> Async.AwaitPromise
-        let! text = responseText response |> Async.AwaitPromise
 
-        if not (responseOk response) then
-            return failwithf "HTTP %d: %s" (responseStatus response) text
-        else
-            return text
+        try
+            let! response = fetchPost url body (timeoutSignal 15000) |> Async.AwaitPromise
+            let! text = responseText response |> Async.AwaitPromise
+
+            if not (responseOk response) then
+                return failwithf "HTTP %d: %s" (responseStatus response) text
+            else
+                return text
+        with ex ->
+            return failwithf "%s: %s" name ex.Message
     }
 
 let private optValue (value: obj) : 'a option =
