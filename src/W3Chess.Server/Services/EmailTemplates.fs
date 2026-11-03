@@ -33,6 +33,18 @@ module EmailTemplates =
 
         subject, body
 
+    /// Appended to game mails for account holders: a login link that lands
+    /// back on the game.
+    let loginLink lang (url: string) =
+        t
+            lang
+            (sprintf
+                "Mit diesem Link meldest du dich bei W3Chess an und kommst direkt zur Partie zurück (30 Minuten gültig):\n%s"
+                url)
+            (sprintf
+                "This link logs you in to W3Chess and takes you straight back to the game (valid for 30 minutes):\n%s"
+                url)
+
     /// Renders the legacy 64-character board (rank 8 first) as ASCII art.
     let renderBoard (legacyBoard: string) (flip: bool) =
         let cellAt file rank = legacyBoard.[(7 - rank) * 8 + file]

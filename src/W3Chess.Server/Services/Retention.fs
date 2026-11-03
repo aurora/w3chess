@@ -25,16 +25,28 @@ module Retention =
                 return List.length expired
         }
 
+    /// Removes expired and used login tokens and returns how many were deleted.
+    let purgeLoginTokens (settings: AppSettings) : Async<int> =
+        async {
+            use connection = Db.connect settings.DatabasePath
+            return LoginTokenRepository.deleteExpiredAndUsed connection (Db.nowIso ())
+        }
+
     /// Runs the cleanup once immediately and then once a day, for as long as
     /// the process lives.
     let startBackground (settings: AppSettings) (log: string -> unit) : unit =
         let rec loop () =
             async {
                 try
-                    let! deleted = cleanupExpired settings
+                    let! deletedGames = cleanupExpired settings
+                    let! deletedTokens = purgeLoginTokens settings
 
-                    if deleted > 0 then
-                        log (sprintf "retention: deleted %d games not updated within %d days" deleted settings.GameRetentionDays)
+                    if deletedGames > 0 || deletedTokens > 0 then
+                        log
+                            (sprintf
+                                "retention: deleted %d games, %d expired login tokens"
+                                deletedGames
+                                deletedTokens)
                 with ex ->
                     log (sprintf "retention: cleanup failed: %s" ex.Message)
 

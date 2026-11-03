@@ -8,7 +8,7 @@ open W3Chess.Server
 open W3Chess.Server.Storage
 
 /// Application logic for creating, joining and playing correspondence games.
-type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEvents) =
+type GameService(settings: AppSettings, authService: AuthService, notifier: Notifier, gameEvents: GameEvents) =
 
     let connect () = Db.connect settings.DatabasePath
 
@@ -32,6 +32,20 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
 
     let sendMail (address: string) subject body =
         notifier.Send { To = address; Subject = subject; Body = body }
+
+    /// Sends a game mail; when the recipient has an account the body gains a
+    /// single-use login link that lands back on `next` after the login.
+    let sendGameMail (email: string) (language: string) (next: string) subject body =
+        async {
+            let! loginLink = authService.CreateLoginLink(email, next)
+
+            let body =
+                match loginLink with
+                | Some url -> body + "\n\n" + EmailTemplates.loginLink language url
+                | None -> body
+
+            do! sendMail email subject body
+        }
 
     let legacyBoardOf (fen: string) = Board.toLegacyBoard (Board.ofFen fen).Board
 
@@ -189,7 +203,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                         creatorToken
                         boardText
 
-                do! sendMail request.Email subject body
+                do! sendGameMail request.Email request.Language (sprintf "game/%s" gameId) subject body
 
                 match opponentId with
                 | Some id ->
@@ -208,7 +222,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                                 opponent.Nickname
                                 boardText
 
-                        do! sendMail opponent.Email subject body
+                        do! sendGameMail opponent.Email opponent.Language (sprintf "game/%s" gameId) subject body
                     | None -> ()
                 | None -> ()
 
@@ -284,7 +298,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                             playerToken
                             boardText
 
-                    do! sendMail request.Email subject body
+                    do! sendGameMail request.Email request.Language (sprintf "game/%s" game.Id) subject body
 
                     let creator =
                         GamePlayerRepository.listByGame connection game.Id
@@ -305,7 +319,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                                 request.Nickname
                                 boardText
 
-                        do! sendMail creator.Email subject body
+                        do! sendGameMail creator.Email creator.Language (sprintf "game/%s" game.Id) subject body
                     | None -> ()
 
                     return
@@ -545,7 +559,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                                             record.San
                                             boardText
 
-                                do! sendMail opponentPlayer.Email subject body
+                                do! sendGameMail opponentPlayer.Email opponentPlayer.Language (sprintf "game/%s" request.GameId) subject body
                             | None -> ()
                         | None -> ()
 
@@ -572,7 +586,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                                         record.San
                                         boardText
 
-                            do! sendMail moverPlayer.Email subject body
+                            do! sendGameMail moverPlayer.Email moverPlayer.Language (sprintf "game/%s" request.GameId) subject body
                         | None -> ()
 
                         return { Ok = true; Error = None }
@@ -617,7 +631,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                                     token
                                     result
 
-                            do! sendMail player.Email subject body
+                            do! sendGameMail player.Email player.Language (sprintf "game/%s" request.GameId) subject body
                         | None -> ()
 
                     return { Ok = true; Error = None }
@@ -660,7 +674,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                                     opponentPlayer.Nickname
                                     (legacyBoardOf game.CurrentFen)
 
-                            do! sendMail opponentPlayer.Email subject body
+                            do! sendGameMail opponentPlayer.Email opponentPlayer.Language (sprintf "game/%s" request.GameId) subject body
                         | None -> ()
                     | None -> ()
 
@@ -704,7 +718,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
                                     token
                                     "1/2-1/2"
 
-                            do! sendMail player.Email subject body
+                            do! sendGameMail player.Email player.Language (sprintf "game/%s" request.GameId) subject body
                         | None -> ()
 
                     return { Ok = true; Error = None }
@@ -746,7 +760,7 @@ type GameService(settings: AppSettings, notifier: Notifier, gameEvents: GameEven
 
             let subject, body = EmailTemplates.digest request.Language entries
 
-            do! sendMail request.Email subject body
+            do! sendGameMail request.Email request.Language "" subject body
 
             return { Ok = true; Error = None }
         }

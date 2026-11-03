@@ -40,7 +40,8 @@ let private makeService (settings: AppSettings) (mails: ResizeArray<Mail>) =
     let notifier =
         { Send = fun mail -> async { mails.Add mail } }
 
-    GameService(settings, notifier, GameEvents())
+    let authService = AuthService(settings, notifier)
+    GameService(settings, authService, notifier, GameEvents())
 
 let private createOpenRequest =
     { Nickname = "Alice"
@@ -532,6 +533,88 @@ let ``a retention of zero days deletes nothing`` () =
 
             let! view = service.GetGame alice.GameId
             Assert.True(view.IsSome)
+        }
+    )
+
+[<Fact>]
+let ``game mails for account holders include a login link`` () =
+    run (
+        async {
+            let settings = newSettings ()
+            migrate settings
+            let mails = ResizeArray<Mail>()
+            let service = makeService settings mails
+
+            use connection = Db.connect settings.DatabasePath
+
+            AccountRepository.insert
+                connection
+                { Id = Db.newId ()
+                  Email = "alice@example.com"
+                  Nickname = "Alice"
+                  Language = "en"
+                  CreatedAt = Db.nowIso () }
+
+            let alice =
+                service.CreateGame
+                    { createOpenRequest with
+                        OpponentNickname = Some "Bob"
+                        OpponentEmail = Some "bob@example.com" }
+                |> Async.RunSynchronously
+                |> unwrap
+
+            // Alice has an account: her mail gains a login link that lands on
+            // the game. Bob has none: his invitation keeps only the game link.
+            let aliceMail = mails |> Seq.find (fun mail -> mail.To = "alice@example.com")
+            Assert.Contains("#/auth?token=", aliceMail.Body)
+            Assert.Contains(sprintf "next=game/%s" alice.GameId, aliceMail.Body)
+
+            let bobMail = mails |> Seq.find (fun mail -> mail.To = "bob@example.com")
+            Assert.DoesNotContain("#/auth?token=", bobMail.Body)
+
+            // An unknown email resolves to no link.
+            let! noLink =
+                AuthService(settings, { Send = fun _ -> async { () } }).CreateLoginLink("nobody@example.com", "game/x")
+
+            Assert.True(noLink.IsNone)
+        }
+    )
+
+[<Fact>]
+let ``retention purges expired and used login tokens`` () =
+    run (
+        async {
+            let settings = newSettings ()
+            migrate settings
+
+            use connection = Db.connect settings.DatabasePath
+            let accountId = Db.newId ()
+
+            AccountRepository.insert
+                connection
+                { Id = accountId
+                  Email = "alice@example.com"
+                  Nickname = "Alice"
+                  Language = "en"
+                  CreatedAt = Db.nowIso () }
+
+            LoginTokenRepository.insert
+                connection
+                { TokenHash = "expired"; AccountId = accountId; CreatedAt = Db.nowIso (); ExpiresAt = "2000-01-01T00:00:00.0000000Z"; UsedAt = "" }
+
+            LoginTokenRepository.insert
+                connection
+                { TokenHash = "used"; AccountId = accountId; CreatedAt = Db.nowIso (); ExpiresAt = Retention.cutoffIso 1; UsedAt = Db.nowIso () }
+
+            LoginTokenRepository.insert
+                connection
+                { TokenHash = "live"; AccountId = accountId; CreatedAt = Db.nowIso (); ExpiresAt = Retention.cutoffIso -1; UsedAt = "" }
+
+            let! purged = Retention.purgeLoginTokens settings
+            Assert.Equal(2, purged)
+
+            Assert.True(LoginTokenRepository.findUnused connection "live" |> Option.isSome)
+            Assert.True(LoginTokenRepository.findUnused connection "expired" |> Option.isNone)
         }
     )
 

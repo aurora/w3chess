@@ -219,3 +219,11 @@ module LoginTokenRepository =
             {| tokenHash = tokenHash; usedAt = usedAt |}
         )
         |> ignore
+
+    /// Deletes tokens that have expired or already been used; returns the
+    /// number of removed rows.
+    let deleteExpiredAndUsed (connection: SqliteConnection) (nowIso: string) : int =
+        connection.Execute(
+            "DELETE FROM login_tokens WHERE expires_at < @now OR used_at <> ''",
+            {| now = nowIso |}
+        )

@@ -48,7 +48,7 @@ let main args =
         let notifier = Notifier.email settings.Smtp
         let gameEvents = GameEvents()
         let authService = AuthService(settings, notifier)
-        let gameService = GameService(settings, notifier, gameEvents)
+        let gameService = GameService(settings, authService, notifier, gameEvents)
         let api = ServerApi.create gameService authService
 
         Retention.startBackground settings (printfn "%s")

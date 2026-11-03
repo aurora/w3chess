@@ -97,3 +97,34 @@ type AuthService(settings: AppSettings, notifier: Notifier) =
                 use connection = connect ()
                 return AccountRepository.findById connection accountId |> Option.map toInfo
         }
+
+    /// Creates a single-use login link that lands on `next` (a hash route
+    /// fragment such as "game/<id>") when the email belongs to an account.
+    /// Returns None when there is no account for the email.
+    member _.CreateLoginLink(email: string, next: string) : Async<string option> =
+        async {
+            use connection = connect ()
+
+            match AccountRepository.findByEmail connection email with
+            | None -> return None
+            | Some account ->
+                let rawToken = randomToken ()
+
+                LoginTokenRepository.insert
+                    connection
+                    { TokenHash = hashToken rawToken
+                      AccountId = account.Id
+                      CreatedAt = Db.nowIso ()
+                      ExpiresAt = DateTimeOffset.UtcNow.Add(loginLifetime).UtcDateTime.ToString("o")
+                      UsedAt = "" }
+
+                let nextPart = if next = "" then "" else "&next=" + next
+
+                return
+                    Some
+                        (sprintf
+                            "%s/#/auth?token=%s%s"
+                            (settings.PublicBaseUrl.TrimEnd('/'))
+                            rawToken
+                            nextPart)
+        }
