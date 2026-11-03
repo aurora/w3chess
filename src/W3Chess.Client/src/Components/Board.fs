@@ -10,6 +10,7 @@ type Props =
       Selected: Square option
       Targets: Square list
       LastMove: (Square * Square) option
+      MovableColor: Color option
       OnClick: Square -> unit
       OnDragStart: Square -> unit
       OnDrop: Square -> Square -> unit }
@@ -55,9 +56,9 @@ let view (props: Props) =
                             )
                             prop.onClick (fun _ -> props.OnClick square)
                             prop.draggable (
-                                match piece with
-                                | Some value -> value.Color = props.Position.SideToMove
-                                | None -> false
+                                match piece, props.MovableColor with
+                                | Some value, Some color -> value.Color = color
+                                | _ -> false
                             )
                             prop.onDragStart (fun (event: DragEvent) ->
                                 event.dataTransfer.setData ("text/plain", string square) |> ignore

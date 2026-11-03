@@ -70,6 +70,18 @@ let GamePage (props: GameProps) =
     let busy, setBusy = React.useState (false)
     let orientation, setOrientation = React.useState (Color.White)
     let offeredByMe, setOfferedByMe = React.useState (false)
+    // Account-session identity for this game; state only, never persisted.
+    let sessionPlayer, setSessionPlayer = React.useState (None: PlayerCredentials option)
+
+    // The acting identity: a per-game token from the email link (or storage)
+    // wins over the account session.
+    let identity = credentials |> Option.orElse sessionPlayer
+
+    let myTurn =
+        match gameView, identity with
+        | Some view, Some identity ->
+            view.Status = GameStatus.Active && view.SideToMove = identity.Color
+        | _ -> false
 
     let reload () =
         async {
@@ -111,8 +123,9 @@ let GamePage (props: GameProps) =
     )
 
     let subscriptionToken =
-        credentials
+        identity
         |> Option.map (fun value -> value.Token)
+        |> Option.filter (fun token -> token <> "")
         |> Option.orElse props.Token
 
     let subscriptionKey = sprintf "%s|%s" (defaultArg subscriptionToken "") (defaultArg session "")
@@ -134,6 +147,23 @@ let GamePage (props: GameProps) =
             | Some view when not view.DrawOfferPending -> setOfferedByMe false
             | _ -> ()),
         [| box gameView |]
+    )
+
+    // Resolve the account session into this game's player when no link
+    // credentials are present.
+    React.useEffect (
+        (fun () ->
+            match session, credentials with
+            | Some session, None ->
+                async {
+                    try
+                        let! resolved = Api.validateSession props.GameId session
+                        setSessionPlayer resolved
+                    with _ -> ()
+                }
+                |> Async.StartImmediate
+            | _ -> ()),
+        [| box props.GameId; box session; box credentials |]
     )
 
     let position = gameView |> Option.map (fun view -> Board.ofFen view.Fen)
@@ -158,19 +188,19 @@ let GamePage (props: GameProps) =
         match gameView with
         | Some view ->
             view.DrawOfferPending
-            && (offeredByMe || view.DrawOfferBy = (credentials |> Option.map (fun c -> c.PlayerId)))
+            && (offeredByMe || view.DrawOfferBy = (identity |> Option.map (fun c -> c.PlayerId)))
         | None -> false
 
     let submitMove (from: Square) (target: Square) (promotion: PieceKind option) =
         async {
-            match credentials, session with
+            match identity, session with
             | None, None -> setError (Some t.Error)
             | _ ->
                 try
                     setBusy true
                     setError None
-                    let playerId = credentials |> Option.map (fun c -> c.PlayerId) |> Option.defaultValue ""
-                    let token = credentials |> Option.map (fun c -> c.Token) |> Option.defaultValue ""
+                    let playerId = identity |> Option.map (fun c -> c.PlayerId) |> Option.defaultValue ""
+                    let token = identity |> Option.map (fun c -> c.Token) |> Option.defaultValue ""
 
                     let! response =
                         Api.submitMove
@@ -213,45 +243,46 @@ let GamePage (props: GameProps) =
 
     let onClick (square: Square) =
         match gameView, position with
-        | Some view, Some position ->
-            match selected with
+        | Some view, Some position when myTurn ->
+            match staged with
+            | Some(stagedFrom, _, _) when List.contains square (targets stagedFrom) ->
+                // Re-target the piece that is already staged.
+                stage stagedFrom square
+            | Some _ -> ()
             | None ->
                 match position.Board.[square] with
                 | Some piece when piece.Color = view.SideToMove -> setSelected (Some square)
-                | _ -> ()
-            | Some from ->
-                if List.contains square (targets from) then
-                    stage from square
-                else
-                    match position.Board.[square] with
-                    | Some piece when piece.Color = view.SideToMove -> setSelected (Some square)
+                | _ ->
+                    match selected with
+                    | Some from when List.contains square (targets from) -> stage from square
                     | _ -> setSelected None
         | _ -> ()
 
     let onDragStart (square: Square) =
-        match position with
-        | Some position ->
-            match position.Board.[square] with
-            | Some piece when piece.Color = position.SideToMove -> setSelected (Some square)
-            | _ -> ()
-        | None -> ()
+        if myTurn && staged.IsNone then
+            match position with
+            | Some position ->
+                match position.Board.[square] with
+                | Some piece when piece.Color = position.SideToMove -> setSelected (Some square)
+                | _ -> ()
+            | None -> ()
 
     let onDrop (source: Square) (target: Square) =
-        if source <> target && List.contains target (targets source) then
+        if myTurn && staged.IsNone && source <> target && List.contains target (targets source) then
             stage source target
         else
             setSelected None
 
     let action (call: PlayerCredentials -> Async<ActionResponse>) =
         async {
-            match credentials, session with
+            match identity, session with
             | None, None -> setError (Some t.Error)
             | _ ->
                 try
                     setBusy true
                     setError None
                     let creds =
-                        credentials
+                        identity
                         |> Option.defaultValue
                             { GameId = props.GameId
                               PlayerId = ""
@@ -280,8 +311,8 @@ let GamePage (props: GameProps) =
             | GameStatus.Finished ->
                 t.Finished + (match view.Result with Some result -> " · " + result | None -> "")
             | GameStatus.Active ->
-                match credentials with
-                | Some credentials -> if view.SideToMove = credentials.Color then t.YourTurn else t.OpponentTurn
+                match identity with
+                | Some identity -> if view.SideToMove = identity.Color then t.YourTurn else t.OpponentTurn
                 | None -> if view.SideToMove = White then t.White else t.Black
 
     let glyphRow (color: Color) (kinds: PieceKind list) =
@@ -443,6 +474,20 @@ let GamePage (props: GameProps) =
                             prop.children [
                                 match position with
                                 | Some position ->
+                                    // While a move is staged the board already
+                                    // shows the position after it; if the staged
+                                    // move became illegal the live position wins.
+                                    let preview =
+                                        match staged with
+                                        | Some(from, target, promotion) ->
+                                            let move = { From = from; To = target; Promotion = promotion }
+
+                                            if MoveGen.isLegalMove position move then
+                                                MoveGen.applyMove position move
+                                            else
+                                                position
+                                        | None -> position
+
                                     yield materialBar position
                                     yield
                                         Html.div [
@@ -450,11 +495,19 @@ let GamePage (props: GameProps) =
                                             prop.children [
                                                 yield
                                                     Board.view
-                                                        { Position = position
+                                                        { Position = preview
                                                           Orientation = orientation
                                                           Selected = selected
                                                           Targets = (match selected with Some from -> targets from | None -> [])
-                                                          LastMove = lastMove
+                                                          LastMove =
+                                                              (match staged with
+                                                               | Some(from, target, _) -> Some(from, target)
+                                                               | None -> lastMove)
+                                                          MovableColor =
+                                                              (if myTurn && staged.IsNone then
+                                                                   Some position.SideToMove
+                                                               else
+                                                                   None)
                                                           OnClick = onClick
                                                           OnDragStart = onDragStart
                                                           OnDrop = onDrop }
@@ -579,7 +632,7 @@ let GamePage (props: GameProps) =
                                                 prop.type'.button
                                                 prop.className
                                                     "h-12 rounded bg-primary text-on-primary font-bold disabled:opacity-50"
-                                                prop.disabled (busy || staged.IsNone || (credentials.IsNone && session.IsNone))
+                                                prop.disabled (busy || staged.IsNone || not myTurn)
                                                 prop.onClick (fun _ ->
                                                     match staged with
                                                     | Some(from, target, promotion) -> submitMove from target promotion
@@ -597,7 +650,7 @@ let GamePage (props: GameProps) =
                                             Html.button [
                                                 prop.type'.button
                                                 prop.className "h-11 rounded border border-outline-variant hover:border-primary text-sm"
-                                                prop.disabled (busy || (credentials.IsNone && session.IsNone))
+                                                prop.disabled (busy || identity.IsNone)
                                                 prop.onClick (fun _ ->
                                                     setOfferedByMe true
 
@@ -612,7 +665,7 @@ let GamePage (props: GameProps) =
                                             Html.button [
                                                 prop.type'.button
                                                 prop.className "h-11 rounded border border-outline-variant hover:border-error text-sm text-error"
-                                                prop.disabled (busy || (credentials.IsNone && session.IsNone))
+                                                prop.disabled (busy || identity.IsNone)
                                                 prop.onClick (fun _ ->
                                                     action (fun credentials ->
                                                         Api.resign
@@ -644,7 +697,7 @@ let GamePage (props: GameProps) =
                                                         prop.type'.button
                                                         prop.className
                                                             "h-11 rounded bg-secondary text-on-secondary font-semibold disabled:opacity-50"
-                                                        prop.disabled (busy || (credentials.IsNone && session.IsNone))
+                                                        prop.disabled (busy || identity.IsNone)
                                                         prop.onClick (fun _ ->
                                                             action (fun credentials ->
                                                                 Api.acceptDraw
